@@ -1,24 +1,25 @@
 const chalk = require('chalk')
-const commandUtils = require('./command-utils')
 const os = require('os')
 const fs = require('fs-extra')
 const path = require('path')
 const inquirer = require('inquirer')
-const promptValidators = require('./prompt-validators')
+const utils = require('../src/util/utilities')
+const log = console.log
+const info = chalk.keyword('cyan')
 
 // Tracks current auth config
 let authConfig = null
 
-const help = function () {
-  let help = `
-Usage: airlocal auth
-
-Commands:
-  config        Create configuration for AIR cloud account authorization
-  check         Check if you are currently logged in with AIR cloud hosting CLI
-  run           Authenticate to the AIR cloud hosting CLI
-`
-  console.log(help)
+function help () {
+  log(chalk.white('Usage: airlocal auth [command]'))
+  log()
+  log(chalk.white('Options:'))
+  log(chalk.white('  -h, --help         output usage information'))
+  log()
+  log(chalk.white('Commands:'))
+  log(chalk.white('  config             ') + info('Setup AIR authentication'))
+  log(chalk.white('  status             ') + info('Show AIR authentication status'))
+  log(chalk.white('  run                ') + info('Run the AIR authentication flow'))
 }
 
 const getAuthConfigDirectory = function () {
@@ -88,6 +89,28 @@ const getAuthDefaults = function () {
   }
 }
 
+const checkAuth = async function () {
+  if (await checkIfConfigured() === false) {
+    console.error(chalk.red('Error: ') + "Auth not configured. Please run 'airlocal auth config' before continuing.")
+    console.log()
+    process.exit()
+  }
+
+  console.log(chalk.yellow('Check auth is WIP'))
+  console.log()
+}
+
+const runAuth = async function () {
+  if (await checkIfConfigured() === false) {
+    console.error(chalk.red('Error: ') + "Auth not configured. Please run 'airlocal auth config' before continuing.")
+    console.log()
+    process.exit()
+  }
+
+  console.log(chalk.yellow('Run auth is WIP'))
+  console.log()
+}
+
 const prompt = async function () {
   let currentUser = await get('user')
 
@@ -122,7 +145,7 @@ const prompt = async function () {
       type: 'input',
       message: 'Enter your auth provider login username or email:',
       default: currentUser || '',
-      validate: promptValidators.validateNotEmpty,
+      validate: utils.validateNotEmpty,
       when: function (answers) {
         return answers.airCustomer === true
       }
@@ -134,7 +157,9 @@ const prompt = async function () {
   return answers
 }
 
-const configure = async function (answers) {
+const configure = async function () {
+  let answers = await prompt()
+
   await set('airCustomer', answers.airCustomer)
   if (answers.airCustomer === true) {
     await set('authType', answers.authType)
@@ -146,48 +171,4 @@ const configure = async function (answers) {
   console.log()
 }
 
-const checkAuth = async function () {
-  if (await checkIfConfigured() === false) {
-    console.error(chalk.red('Error: ') + "Auth not configured. Please run 'airlocal auth config' before continuing.")
-    console.log()
-    process.exit()
-  }
-
-  console.log(chalk.yellow('Check auth is WIP'))
-  console.log()
-}
-
-const runAuth = async function () {
-  if (await checkIfConfigured() === false) {
-    console.error(chalk.red('Error: ') + "Auth not configured. Please run 'airlocal auth config' before continuing.")
-    console.log()
-    process.exit()
-  }
-
-  console.log(chalk.yellow('Run auth is WIP'))
-  console.log()
-}
-
-const command = async function () {
-  if (commandUtils.subcommand() === 'help' || commandUtils.subcommand() === false) {
-    help()
-  } else {
-    switch (commandUtils.subcommand()) {
-      case 'config':
-        let answers = await prompt()
-        await configure(answers)
-        break
-      case 'check':
-        checkAuth()
-        break
-      case 'run':
-        runAuth()
-        break
-      default:
-        help()
-        break
-    }
-  }
-}
-
-module.exports = { command, checkIfAuthConfigured, get, set, getAuthConfigDirectory }
+module.exports = { help, configure, checkIfAuthConfigured, get, set, getAuthConfigDirectory, checkAuth, runAuth }

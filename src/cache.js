@@ -1,14 +1,17 @@
-const commandUtils = require('./command-utils')
+const chalk = require('chalk')
 const gateway = require('./gateway')
+const log = console.log
+const info = chalk.keyword('cyan')
 
-const help = function () {
-  let help = `
-Usage: airlocal cache clear
-
-Clears npm, wp-cli, and Air Snapshots caches
-`
-  console.log(help)
-  process.exit()
+function help () {
+  log(chalk.white('Usage: airlocal auth [command]'))
+  log()
+  log(chalk.white('Options:'))
+  log(chalk.white('  -h, --help       output usage information'))
+  log()
+  log(chalk.white('Commands:'))
+  log(chalk.white('  clear            ') + info('Clears WP-CLI, NPM, and AIRSnapshots caches'))
+  log(chalk.white('  info             ') + info('Show AIR authentication status'))
 }
 
 const clear = async function () {
@@ -18,15 +21,8 @@ const clear = async function () {
   console.log('Cache Cleared')
 }
 
-const command = async function () {
-  switch (commandUtils.subcommand()) {
-    case 'clear':
-      await clear()
-      break
-    default:
-      help()
-      break
-  }
+const printInfo = async function () {
+  console.log('Cache Volume Information')
 }
 
-module.exports = { command, clear }
+module.exports = { help, clear, printInfo }

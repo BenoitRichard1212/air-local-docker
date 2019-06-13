@@ -8,7 +8,60 @@ const promptValidators = require('./prompt-validators')
 // Tracks current config
 let config = null
 
-const getConfigDirectory = function () {
+const command = async function () {
+  let answers = await prompt()
+  await configure(answers)
+}
+
+const configure = async function (configuration) {
+  let sitesPath = path.resolve(configuration.sitesPath)
+  let snapshotsPath = path.resolve(configuration.snapshotsPath)
+
+  // Attempt to create the sites directory
+  try {
+    await fs.ensureDir(sitesPath)
+  } catch (ex) {
+    console.error('Error: Could not create directory for environments!')
+    process.exit(1)
+  }
+
+  // Make sure we can write to the sites directory
+  try {
+    let testfile = path.join(sitesPath, 'testfile')
+    await fs.ensureFile(testfile)
+    await fs.remove(testfile)
+  } catch (ex) {
+    console.error('Error: The environment directory is not writable')
+    process.exit(1)
+  }
+
+  // Make sure we can write to the snapshots
+  try {
+    let testfile = path.join(snapshotsPath, 'testfile')
+    await fs.ensureFile(testfile)
+    await fs.remove(testfile)
+  } catch (ex) {
+    console.error('Error: The snapshots directory is not writable')
+    process.exit(1)
+  }
+
+  await set('sitesPath', sitesPath)
+  await set('snapshotsPath', snapshotsPath)
+  await set('manageHosts', configuration.manageHosts)
+
+  console.log(chalk.green('Successfully Configured Air Local Docker!'))
+  console.log()
+}
+
+function getDefaults () {
+  return {
+    sitesPath: path.join(os.homedir(), 'air-local-docker-sites'),
+    snapshotsPath: path.join(os.homedir(), '.airsnapshots'),
+    manageHosts: true
+  }
+}
+
+function getConfigDirectory () {
   return path.join(os.homedir(), '.airlocal')
 }
 
@@ -58,14 +111,6 @@ const set = async function (key, value) {
   config[ key ] = value
 
   await write()
-}
-
-const getDefaults = function () {
-  return {
-    sitesPath: path.join(os.homedir(), 'air-local-docker-sites'),
-    snapshotsPath: path.join(os.homedir(), '.airsnapshots'),
-    manageHosts: true
-  }
 }
 
 const prompt = async function () {
@@ -131,52 +176,6 @@ const configureDefaults = async function () {
   let defaults = getDefaults()
 
   await configure(defaults)
-}
-
-const configure = async function (configuration) {
-  let sitesPath = path.resolve(configuration.sitesPath)
-  let snapshotsPath = path.resolve(configuration.snapshotsPath)
-
-  // Attempt to create the sites directory
-  try {
-    await fs.ensureDir(sitesPath)
-  } catch (ex) {
-    console.error('Error: Could not create directory for environments!')
-    process.exit(1)
-  }
-
-  // Make sure we can write to the sites directory
-  try {
-    let testfile = path.join(sitesPath, 'testfile')
-    await fs.ensureFile(testfile)
-    await fs.remove(testfile)
-  } catch (ex) {
-    console.error('Error: The environment directory is not writable')
-    process.exit(1)
-  }
-
-  // Make sure we can write to the snapshots
-  try {
-    let testfile = path.join(snapshotsPath, 'testfile')
-    await fs.ensureFile(testfile)
-    await fs.remove(testfile)
-  } catch (ex) {
-    console.error('Error: The snapshots directory is not writable')
-    process.exit(1)
-  }
-
-  await set('sitesPath', sitesPath)
-  await set('snapshotsPath', snapshotsPath)
-  await set('manageHosts', configuration.manageHosts)
-
-  console.log(chalk.green('Successfully Configured Air Local Docker!'))
-  console.log()
-}
-
-const command = async function () {
-  // not really any options for this command, but setting up the same structure anyways
-  let answers = await prompt()
-  await configure(answers)
 }
 
 /**
