@@ -1,54 +1,15 @@
-/*
- * Trying to keep some variables consistent in name throughout the app, so its clear what each one contains, and
- * we don't run into a case where a variable might actually be the same thing with many different names
- *
- * Variables:
- *  rootPath    Path to the root of Air Local Docker. Every other path is based on this path currently
- *  srcPath     Path to the source code of Air Local Docker generator scripts as well as the config files copied to each project
- *  sitesPath   Path to the folder all environments are ultimately generated inside of
- *  cacheVolume Named volume that we mount to containers for cache (wp-cli and npm cache)
- *  globalPath  Path to the global container installation. Contains the global docker-compose as well as DB Data files
- *
- * Methods & Variables
- *
- * The following have a method in this class (as they vary per environment) and also may be used inline as a variable
- * with the same name
- *
- *  envSlug     Accepts a hostname or envSlug and returns a consistent envSlug
- *  envPath     Path within `sitesPath` for the given environment
- */
-
-const slugify = require('@sindresorhus/slugify')
 const path = require('path')
-const config = require('./configure')
-const rootPath = path.dirname(require.main.filename)
-const srcPath = path.join(rootPath, 'src')
-const cacheVolume = 'airlocalCache'
-const globalPath = path.join(rootPath, 'global')
 const async = require('asyncro')
 const fs = require('fs-extra')
 const inquirer = require('inquirer')
 const chalk = require('chalk')
 const helper = require('./helpers')
-
-const sitesPath = async function () {
-  return await config.get('sitesPath')
-}
-
-const envSlug = function (env) {
-  return slugify(env)
-}
-
-const envPath = async function (env) {
-  let envPath = path.join(await sitesPath(), envSlug(env))
-
-  return envPath
-}
+const utils = require('./utilities')
 
 const parseEnvFromCWD = async function () {
   // Compare both of these as all lowercase to account for any misconfigurations
   let cwd = process.cwd().toLowerCase()
-  let sitesPathValue = await sitesPath()
+  let sitesPathValue = await utils.sitesPath()
   sitesPathValue = sitesPathValue.toLowerCase()
 
   if (cwd.indexOf(sitesPathValue) === -1) {
@@ -75,7 +36,7 @@ const parseEnvFromCWD = async function () {
 }
 
 const getAllEnvironments = async function () {
-  let sitePath = await sitesPath()
+  let sitePath = await utils.sitesPath()
   let dirContent = await fs.readdir(sitePath)
 
   // Make into full path
@@ -93,7 +54,8 @@ const getAllEnvironments = async function () {
   dirContent = await async.filter(dirContent, async item => {
     let configFile = path.join(item, '.config.json')
 
-    return await fs.exists(configFile)
+    const config = await fs.exists(configFile)
+    return config
   })
 
   // Back to just the basename
@@ -149,7 +111,7 @@ const getPathOrError = async function (env) {
 
   console.log(`Locating project files for ${env}`)
 
-  let _envPath = await envPath(env)
+  let _envPath = await utils.envPath(env)
   if (!await fs.pathExists(_envPath)) {
     console.error(`ERROR: Cannot find ${env} environment!`)
     process.exit(1)
@@ -161,8 +123,8 @@ const getPathOrError = async function (env) {
 /**
  * Format the default Proxy URL based on entered hostname
  *
- * @param  string value 	The user entered hostname
- * @return string       	The formatted default proxy URL
+ * @param  {string} value The user entered hostname
+ * @return {string} The formatted default proxy URL
  */
 const createDefaultProxy = function (value) {
   let proxyUrl = 'http://' + helper.removeEndSlashes(value)
@@ -177,4 +139,4 @@ const createDefaultProxy = function (value) {
   return proxyUrl
 }
 
-module.exports = { rootPath, srcPath, sitesPath, cacheVolume, globalPath, envSlug, envPath, parseEnvFromCWD, getAllEnvironments, promptEnv, parseOrPromptEnv, getEnvHosts, getPathOrError, createDefaultProxy }
+module.exports = { parseEnvFromCWD, getAllEnvironments, promptEnv, parseOrPromptEnv, getEnvHosts, getPathOrError, createDefaultProxy }
