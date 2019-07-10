@@ -1,27 +1,32 @@
 const path = require('path')
-const { utilPath } = require('./variables')
-const winston = require('winston')
+const { createLogger, format, transports } = require('winston')
 const { LoggingWinston } = require('@google-cloud/logging-winston')
+const { utilPath } = require('./variables')
 const utils = require('./utilities')
-const configDir = utils.getConfigDirectory()
 
 const loggingWinston = new LoggingWinston({
   projectId: 'forty-five-air',
   keyFilename: path.join(utilPath, 'logger.json')
 })
 
-const logger = winston.createLogger({
+const logger = createLogger({
   level: 'info',
-  format: winston.format.json(),
+  format: format.combine(
+    format.timestamp({
+      format: 'YYYY-MM-DD HH:mm:ss'
+    }),
+    format.errors({ stack: true }),
+    format.splat(),
+    format.json()
+  ),
+  defaultMeta: { service: 'air-local-docker' },
   transports: [
-    new winston.transports.File({
-      filename: path.join(configDir, 'error.log'),
+    new transports.File({
+      filename: path.join(utils.getConfigDirectory(), 'error.log'),
       maxsize: '40m',
       maxFiles: 5
     })
   ]
 })
 
-logger.add(loggingWinston)
-
-module.exports = { logger }
+module.exports = { logger, loggingWinston }

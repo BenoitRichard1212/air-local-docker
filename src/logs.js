@@ -1,34 +1,45 @@
-const commandUtils = require('./command-utils')
+const chalk = require('chalk')
 const execSync = require('child_process').execSync
-const envUtils = require('./env-utils')
 const gateway = require('./gateway')
+const envUtils = require('./util/env')
+const utils = require('./util/utilities')
 const environment = require('./environment')
+const log = console.log
+const error = chalk.bold.red
+const info = chalk.keyword('cyan')
 
-const command = async function () {
-  let envSlug = await envUtils.parseOrPromptEnv()
-  if (envSlug === false) {
-    console.error('Error: Unable to determine which environment to show logs from. Please run this command from within your environment.')
-    process.exit(1)
-  }
-
-  let envPath = await envUtils.envPath(envSlug)
-  let container = commandUtils.subcommand() || ''
-
-  // Check if the container is running, otherwise, start up the stacks
-  // If we're listening for output on all containers (subcommand is '') don't start, just attach
-  try {
-    let output = execSync(`docker-compose ps`, { cwd: envPath }).toString()
-    if (container && output.indexOf(container) === -1) {
-      await gateway.startGlobal()
-      await environment.start(envSlug)
-    }
-  } catch (ex) {}
-
-  try {
-    execSync(`docker-compose logs -f ${container}`, { stdio: 'inherit', cwd: envPath })
-  } catch (ex) {}
-
-  process.exit()
+function help () {
+  log(chalk.white('Command: airlocal logs'))
+  log()
+  log(chalk.white('Options:'))
+  log(chalk.white('  -h, --help         output usage information'))
+  log()
+  log(chalk.white('Usage:'))
+  log(chalk.white('  logs               ') + info('Show all logs for all running containers'))
+  log(chalk.white('  logs [container]   ') + info('Show logs for a specific container'))
 }
 
-module.exports = { command }
+const command = async function (container) {
+  let envSlug = await envUtils.parseOrPromptEnv()
+  if (envSlug === false) {
+    log(error('Error: Unable to determine which environment to show logs from. Please run this command from within your environment.'))
+  } else {
+    let envPath = await utils.envPath(envSlug)
+
+    // Check if the container is running, otherwise, start up the stacks
+    // If we're listening for output on all containers (subcommand is '') don't start, just attach
+    try {
+      let output = execSync(`docker-compose ps`, { cwd: envPath }).toString()
+      if (container && output.indexOf(container) === -1) {
+        await gateway.startGlobal()
+        await environment.start(envSlug)
+      }
+    } catch (ex) {}
+
+    try {
+      execSync(`docker-compose logs -f ${container}`, { stdio: 'inherit', cwd: envPath })
+    } catch (ex) {}
+  }
+}
+
+module.exports = { command, help }

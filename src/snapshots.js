@@ -14,11 +14,12 @@ function help () {
   log(chalk.white('  create           ') + info('Create a DB snapshot for the current env'))
 }
 
-const getSnapshotsDir = async function () {
-  return await configure.get('snapshotsPath')
+async function getSnapshotsDir () {
+  const snapshotsPath = await configure.get('snapshotsPath')
+  return snapshotsPath
 }
 
-const checkIfConfigured = async function () {
+async function checkIfConfigured () {
   const authConfigured = await auth.checkIfAuthConfigured()
 
   if (authConfigured === false) {
@@ -28,8 +29,8 @@ const checkIfConfigured = async function () {
   return true
 }
 
-const createSnapshot = function () {
+function createSnapshot () {
   console.log(chalk.yellow('Snapshots still WIP'))
 }
 
-module.exports = { help, checkIfConfigured, configure }
+module.exports = { help, checkIfConfigured, getSnapshotsDir, createSnapshot }

@@ -5,6 +5,8 @@ const inquirer = require('inquirer')
 const chalk = require('chalk')
 const helper = require('./helpers')
 const utils = require('./utilities')
+const log = console.log
+const error = chalk.bold.red
 
 const parseEnvFromCWD = async function () {
   // Compare both of these as all lowercase to account for any misconfigurations
@@ -50,7 +52,7 @@ const getAllEnvironments = async function () {
     return stat.isDirectory()
   })
 
-  // Filter any that don't have the .config.json file (which indicates its probably not a Air Local Docker Environment)
+  // Filter any that don't have the .config.json file (which indicates its probably not a AIRLocal Environment)
   dirContent = await async.filter(dirContent, async item => {
     let configFile = path.join(item, '.config.json')
 
@@ -78,7 +80,7 @@ const promptEnv = async function () {
     }
   ]
 
-  console.log(chalk.bold.white('Unable to determine environment from current directory'))
+  log(chalk.bold.white('Unable to determine environment from current directory'))
   let answers = await inquirer.prompt(questions)
 
   return answers.envSlug
@@ -109,11 +111,11 @@ const getPathOrError = async function (env) {
     env = await promptEnv()
   }
 
-  console.log(`Locating project files for ${env}`)
+  log(chalk.bold.white(`Locating project files for ${env}`))
 
   let _envPath = await utils.envPath(env)
   if (!await fs.pathExists(_envPath)) {
-    console.error(`ERROR: Cannot find ${env} environment!`)
+    log(error(`ERROR: Cannot find ${env} environment!`))
     process.exit(1)
   }
 

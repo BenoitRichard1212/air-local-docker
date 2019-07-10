@@ -1,7 +1,9 @@
 const chalk = require('chalk')
 const gateway = require('./gateway')
+const execSync = require('child_process').execSync
 const log = console.log
 const info = chalk.keyword('cyan')
+const warning = chalk.keyword('orange')
 
 function help () {
   log(chalk.white('Usage: airlocal auth [command]'))
@@ -18,11 +20,13 @@ const clear = async function () {
   await gateway.removeCacheVolume()
   await gateway.ensureCacheExists()
 
-  console.log('Cache Cleared')
+  log(warning('Cache Cleared'))
 }
 
 const printInfo = async function () {
-  console.log('Cache Volume Information')
+  log(chalk.white('Cache Volume Information'))
+  let networks = execSync('docker volume ls --filter name=^airlocalCache$').toString()
+  log(networks)
 }
 
 module.exports = { help, clear, printInfo }

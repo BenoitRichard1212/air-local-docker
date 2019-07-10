@@ -3,7 +3,7 @@ const os = require('os')
 const fs = require('fs-extra')
 const path = require('path')
 const inquirer = require('inquirer')
-const utils = require('../src/util/utilities')
+const helpers = require('./util/helpers')
 const log = console.log
 const info = chalk.keyword('cyan')
 
@@ -17,7 +17,7 @@ function help () {
   log(chalk.white('  -h, --help         output usage information'))
   log()
   log(chalk.white('Commands:'))
-  log(chalk.white('  config             ') + info('Setup AIR authentication'))
+  log(chalk.white('  configure          ') + info('Setup AIR authentication'))
   log(chalk.white('  status             ') + info('Show AIR authentication status'))
   log(chalk.white('  run                ') + info('Run the AIR authentication flow'))
 }
@@ -31,7 +31,8 @@ const getAuthConfigFilePath = function () {
 }
 
 const checkIfAuthConfigured = async function () {
-  return await fs.exists(getAuthConfigFilePath())
+  const authConfigured = await fs.exists(getAuthConfigFilePath())
+  return authConfigured
 }
 
 const checkIfConfigured = async function () {
@@ -145,7 +146,7 @@ const prompt = async function () {
       type: 'input',
       message: 'Enter your auth provider login username or email:',
       default: currentUser || '',
-      validate: utils.validateNotEmpty,
+      validate: helpers.validateNotEmpty,
       when: function (answers) {
         return answers.airCustomer === true
       }

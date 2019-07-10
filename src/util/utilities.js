@@ -4,17 +4,10 @@ const fs = require('fs-extra')
 const execSync = require('child_process').execSync
 const slugify = require('@sindresorhus/slugify')
 const async = require('asyncro')
+const configure = require('../configure')
 
 // Tracks current config
 let config = null
-
-function getDefaults () {
-  return {
-    sitesPath: path.join(os.homedir(), 'air-local-docker-sites'),
-    snapshotsPath: path.join(os.homedir(), '.airsnapshots'),
-    manageHosts: true
-  }
-}
 
 /**
  * Resolve the path to users home directory
@@ -70,7 +63,7 @@ async function read () {
 }
 
 async function get (key) {
-  let defaults = getDefaults()
+  let defaults = configure.getDefaults()
 
   if (config === null) {
     await read()
@@ -120,4 +113,9 @@ function checkIfDockerRunning () {
   return true
 }
 
-module.exports = { getDefaults, checkIfDockerRunning, envPath, sitesPath, envSlug, get, set, read, write, configFileExists, getConfigFilePath, getConfigDirectory, resolveHome, async }
+async function shareErrors () {
+  const sharing = await configure.get('shareErrors')
+  return sharing
+}
+
+module.exports = { checkIfDockerRunning, envPath, sitesPath, envSlug, get, set, read, write, configFileExists, getConfigFilePath, getConfigDirectory, resolveHome, async, shareErrors }
