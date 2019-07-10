@@ -1,6 +1,4 @@
-const commandUtils = require('./command-utils')
 const execSync = require('child_process').execSync
-const envUtils = require('./env-utils')
 const gateway = require('./gateway')
 const environment = require('./environment')
 

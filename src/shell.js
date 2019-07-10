@@ -1,17 +1,17 @@
-const commandUtils = require('./command-utils')
 const execSync = require('child_process').execSync
-const envUtils = require('./env-utils')
 const gateway = require('./gateway')
 const environment = require('./environment')
+const env = require('./util/env')
+const utils = require('./util/utilities')
 
 const command = async function () {
-  let envSlug = await envUtils.parseOrPromptEnv()
+  let envSlug = await env.parseOrPromptEnv()
   if (envSlug === false) {
     console.error('Error: Unable to determine which environment to open a shell for. Please run this command from within your environment.')
     process.exit(1)
   }
 
-  let envPath = await envUtils.envPath(envSlug)
+  let envPath = await utils.envPath(envSlug)
   let container = commandUtils.subcommand() || 'phpfpm'
 
   // Check if the container is running, otherwise, start up the stacks
