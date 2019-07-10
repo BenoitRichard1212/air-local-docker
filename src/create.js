@@ -26,7 +26,7 @@ const createEnv = async function () {
         'image': 'memcached:latest'
       },
       'nginx': {
-        'image': 'nginx:latest',
+        'image': '45air/nginx:latest',
         'expose': [
           '80',
           '443'

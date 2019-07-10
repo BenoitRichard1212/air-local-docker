@@ -19,7 +19,7 @@ const images = [
   '45air/phpfpm:5.6',
   '45air/wpsnapshots:dev',
   'memcached:latest',
-  'nginx:latest',
+  '45air/nginx:latest',
   'docker.elastic.co/elasticsearch/elasticsearch:5.6.5',
   'hitwe/phpmemcachedadmin'
 ]
