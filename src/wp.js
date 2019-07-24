@@ -1,6 +1,8 @@
 const execSync = require('child_process').execSync
 const gateway = require('./gateway')
 const environment = require('./environment')
+const utils = require('./util/utilities')
+const envUtils = require('./util/env')
 
 const command = async function () {
   let envSlug = await envUtils.parseOrPromptEnv()
@@ -9,7 +11,7 @@ const command = async function () {
     process.exit(1)
   }
 
-  let envPath = await envUtils.envPath(envSlug)
+  let envPath = await utils.envPath(envSlug)
 
   // Check if the container is running, otherwise, start up the stacks
   try {
@@ -21,14 +23,14 @@ const command = async function () {
   } catch (ex) {}
 
   // Get everything after the wp command, so we can pass to the docker container
-  let command = commandUtils.commandArgs()
+  // let command = commandUtils.commandArgs()
 
   // Check for TTY
   let ttyFlag = process.stdin.isTTY ? '' : '-T'
 
   // Run the command
   try {
-    execSync(`docker-compose exec ${ttyFlag} --user www-data phpfpm wp ${command}`, { stdio: 'inherit', cwd: envPath })
+    execSync(`docker-compose exec ${ttyFlag} --user www-data phpfpm wp`, { stdio: 'inherit', cwd: envPath })
   } catch (ex) {}
 
   process.exit()

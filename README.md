@@ -170,7 +170,7 @@ is `docker.test`, you can access PHPMemcachedAdmin at `docker.test/__memcacheadm
 #### Xdebug
 
 Xdebug is included in the php images and is nearly ready to go out of the box. Make sure your IDE is listening for
-PHP debug connections and set up a path mapping to your local environment's `wordpress/` directory to `/var/www/html/`
+PHP debug connections and set up a path mapping to your local environment's `wordpress/` directory to `/var/www/web/`
 in the container.
 
 ##### Visual Studio Code
@@ -185,7 +185,7 @@ in the container.
             "request": "launch",
             "port": 9000,
             "pathMappings": {
-                "/var/www/html": "${workspaceFolder}/wordpress",
+                "/var/www/web": "${workspaceFolder}/wordpress",
             }
         }
 ]

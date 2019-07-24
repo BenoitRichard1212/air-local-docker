@@ -32,7 +32,7 @@ const createEnv = async function () {
           '443'
         ],
         'volumes': [
-          './wordpress:/var/www/html:cached'
+          './wordpress:/var/www/web:cached'
         ],
         'depends_on': [
           'phpfpm',
@@ -254,7 +254,7 @@ const createEnv = async function () {
   baseConfig.services.phpfpm = {
     'image': '45air/phpfpm:' + answers.phpVersion,
     'volumes': [
-      './wordpress:/var/www/html:cached',
+      './wordpress:/var/www/web:cached',
       './config/php-fpm/php.ini:/usr/local/etc/php/php.ini:cached',
       './config/php-fpm/docker-php-ext-xdebug.ini:/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini:cached',
       `${cacheVolume}:/var/www/.wp-cli/cache:cached`,
