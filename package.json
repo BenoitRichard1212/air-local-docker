@@ -1,6 +1,6 @@
 {
   "name": "@45air/air-local-docker",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Local Docker development environment setup and provisioning from the command line",
   "license": "MIT",
   "main": "index.js",
