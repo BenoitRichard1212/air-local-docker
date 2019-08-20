@@ -20,16 +20,16 @@ function help () {
 }
 
 const command = async function (container) {
-  let envSlug = await envUtils.parseOrPromptEnv()
+  const envSlug = await envUtils.parseOrPromptEnv()
   if (envSlug === false) {
     log(error('Error: Unable to determine which environment to show logs from. Please run this command from within your environment.'))
   } else {
-    let envPath = await utils.envPath(envSlug)
+    const envPath = await utils.envPath(envSlug)
 
     // Check if the container is running, otherwise, start up the stacks
     // If we're listening for output on all containers (subcommand is '') don't start, just attach
     try {
-      let output = execSync(`docker-compose ps`, { cwd: envPath }).toString()
+      const output = execSync(`docker-compose ps`, { cwd: envPath }).toString()
       if (container && output.indexOf(container) === -1) {
         await gateway.startGlobal()
         await environment.start(envSlug)

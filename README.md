@@ -130,7 +130,7 @@ on the options selected during creation of the environment, but may include:
 * `phpfpm`
 * `nginx`
 * `elasticsearch`
-* `memcached`
+* `redis`
 
 #### Logs
 
@@ -140,7 +140,7 @@ vary depending on the options selected during creation of the environment, but m
 * `phpfpm`
 * `nginx`
 * `elasticsearch`
-* `memcached`
+* `redis`
 
 ### Tools
 
@@ -158,14 +158,6 @@ Access phpMyAdmin by navigating to [http://localhost:8092](http://localhost:8092
 is preconfigured to catch mail sent from any of the environments created by Air Local Docker.
 
 Access MailCatcher by navigating to [http://localhost:1080](http://localhost:1080).
-
-#### PHPMemcachedAdmin
-
-[PHPMemcachedAdmin](https://github.com/elijaa/phpmemcachedadmin) is available within each environment. It enables you
-to view basic memcache stats as well as execute based memcache commands.
-
-Access PHPMemcachedAdmin by appending `/__memcacheadmin/` to your environment's hostname. For example, if your hostname
-is `docker.test`, you can access PHPMemcachedAdmin at `docker.test/__memcacheadmin/`
 
 #### Xdebug
 

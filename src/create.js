@@ -20,65 +20,55 @@ const info = chalk.keyword('cyan')
 
 const createEnv = async function () {
   var baseConfig = {
-    'version': '3',
-    'services': {
-      'memcached': {
-        'image': 'memcached:latest'
+    version: '3',
+    services: {
+      redis: {
+        image: 'redis:latest'
       },
-      'nginx': {
-        'image': '45air/nginx:latest',
-        'expose': [
+      nginx: {
+        image: '45air/nginx:latest',
+        expose: [
           '80',
           '443'
         ],
-        'volumes': [
+        volumes: [
           './wordpress:/var/www/web:cached'
         ],
-        'depends_on': [
-          'phpfpm',
-          'memcacheadmin'
+        depends_on: [
+          'phpfpm'
         ],
-        'networks': [
+        networks: [
           'default',
           'airlocaldocker'
         ],
-        'environment': {
-          'CERT_NAME': 'localhost',
-          'HTTPS_METHOD': 'noredirect'
+        environment: {
+          CERT_NAME: 'localhost',
+          HTTPS_METHOD: 'noredirect'
         }
-      },
-      'memcacheadmin': {
-        'image': 'hitwe/phpmemcachedadmin',
-        'expose': [
-          '80'
-        ],
-        'depends_on': [
-          'memcached'
-        ]
       }
     }
   }
 
   var networkConfig = {
-    'networks': {
-      'airlocaldocker': {
-        'external': {
-          'name': 'airlocaldocker'
+    networks: {
+      airlocaldocker: {
+        external: {
+          name: 'airlocaldocker'
         }
       }
     }
   }
 
   var volumeConfig = {
-    'volumes': {}
+    volumes: {}
   }
-  volumeConfig.volumes[ cacheVolume ] = {
-    'external': {
-      'name': `${cacheVolume}`
+  volumeConfig.volumes[cacheVolume] = {
+    external: {
+      name: `${cacheVolume}`
     }
   }
 
-  let questions = [
+  const questions = [
     {
       name: 'hostname',
       type: 'input',
@@ -97,7 +87,7 @@ const createEnv = async function () {
       type: 'input',
       message: 'Enter additional hostnames separated by spaces (Ex: docker1.test docker2.test)',
       filter: async function (value) {
-        let answers = value.split(' ').map(function (value) {
+        const answers = value.split(' ').map(function (value) {
           return value.trim()
         }).filter(function (value) {
           return value.length > 0
@@ -132,7 +122,7 @@ const createEnv = async function () {
       name: 'phpVersion',
       type: 'list',
       message: 'What version of PHP would you like to use?',
-      choices: [ '7.3', '7.2', '7.1', '7.0', '5.6' ],
+      choices: ['7.3', '7.2', '7.1', '7.0', '5.6'],
       default: '7.3'
     },
     {
@@ -212,12 +202,12 @@ const createEnv = async function () {
     }
   ]
 
-  let answers = await inquirer.prompt(questions)
+  const answers = await inquirer.prompt(questions)
 
   // Folder name inside of /sites/ for this site
-  let envHost = answers.hostname
-  let envSlug = utils.envSlug(envHost)
-  let envPath = await utils.envPath(envHost)
+  const envHost = answers.hostname
+  const envSlug = utils.envSlug(envHost)
+  const envPath = await utils.envPath(envHost)
 
   // Default nginx configuration file
   let nginxConfig = 'default.conf'
@@ -230,8 +220,8 @@ const createEnv = async function () {
 
   await gateway.startGlobal()
 
-  let allHosts = [ answers.hostname ]
-  let starHosts = []
+  let allHosts = [answers.hostname]
+  const starHosts = []
 
   if (answers.addMoreHosts === true) {
     answers.extraHosts.forEach(function (host) {
@@ -252,22 +242,22 @@ const createEnv = async function () {
   baseConfig.services.nginx.environment.VIRTUAL_HOST = allHosts.concat(starHosts).join(',')
 
   baseConfig.services.phpfpm = {
-    'image': '45air/phpfpm:' + answers.phpVersion,
-    'volumes': [
+    image: '45air/phpfpm:' + answers.phpVersion,
+    volumes: [
       './wordpress:/var/www/web:cached',
       './config/php-fpm/php.ini:/usr/local/etc/php/php.ini:cached',
       './config/php-fpm/docker-php-ext-xdebug.ini:/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini:cached',
       `${cacheVolume}:/var/www/.wp-cli/cache:cached`,
       '~/.ssh:/root/.ssh:cached'
     ],
-    'depends_on': [
-      'memcached'
+    depends_on: [
+      'redis'
     ],
-    'networks': [
+    networks: [
       'default',
       'airlocaldocker'
     ],
-    'dns': [
+    dns: [
       '10.0.0.2'
     ]
   }
@@ -287,15 +277,15 @@ const createEnv = async function () {
 
     baseConfig.services.elasticsearch = {
       image: 'docker.elastic.co/elasticsearch/elasticsearch:5.6.5',
-      'expose': [
+      expose: [
         '9200'
       ],
-      'volumes': [
+      volumes: [
         './config/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:cached',
         './config/elasticsearch/plugins:/usr/share/elasticsearch/plugins:cached',
         'elasticsearchData:/usr/share/elasticsearch/data:delegated'
       ],
-      'environment': {
+      environment: {
         ES_JAVA_OPTS: '-Xms750m -Xmx750m'
       }
     }
@@ -311,9 +301,9 @@ const createEnv = async function () {
 
   // Write Docker Compose
   console.log('Generating docker-compose.yml file...')
-  let dockerCompose = Object.assign(baseConfig, networkConfig, volumeConfig)
+  const dockerCompose = Object.assign(baseConfig, networkConfig, volumeConfig)
   await new Promise(resolve => {
-    yaml(path.join(envPath, 'docker-compose.yml'), dockerCompose, { 'lineWidth': 500 }, function (err) {
+    yaml(path.join(envPath, 'docker-compose.yml'), dockerCompose, { lineWidth: 500 }, function (err) {
       if (err) {
         console.log(err)
       }
@@ -375,11 +365,11 @@ const createEnv = async function () {
 
   if (await config.get('manageHosts') === true) {
     console.log('Adding entry to hosts file')
-    let sudoOptions = {
+    const sudoOptions = {
       name: 'AIRLocal'
     }
     await new Promise(resolve => {
-      let hostsstring = allHosts.join(' ')
+      const hostsstring = allHosts.join(' ')
       sudo.exec(`airlocal-hosts add ${hostsstring}`, sudoOptions, function (error, stdout, stderr) {
         if (error) {
           console.error(chalk.bold.yellow('Warning: ') + `Something went wrong adding host file entries. You may need to add the /etc/hosts entries manually.`)
@@ -394,8 +384,8 @@ const createEnv = async function () {
   }
 
   // Track things we might need to know later in order to clean up the environment
-  let envConfig = {
-    'envHosts': allHosts
+  const envConfig = {
+    envHosts: allHosts
   }
   await fs.writeJson(path.join(envPath, '.config.json'), envConfig)
 

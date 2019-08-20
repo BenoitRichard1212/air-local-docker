@@ -7,8 +7,7 @@ const info = chalk.keyword('cyan')
 const globalImages = [
   '45air/nginx-proxy:latest',
   'mysql:5.7',
-  'schickling/mailcatcher',
-  'phpmyadmin/phpmyadmin'
+  'schickling/mailcatcher'
 ]
 const images = [
   '45air/phpfpm:latest',
@@ -18,10 +17,9 @@ const images = [
   '45air/phpfpm:7.0',
   '45air/phpfpm:5.6',
   '45air/wpsnapshots:dev',
-  'memcached:latest',
+  'redis:latest',
   '45air/nginx:latest',
-  'docker.elastic.co/elasticsearch/elasticsearch:5.6.5',
-  'hitwe/phpmemcachedadmin'
+  'docker.elastic.co/elasticsearch/elasticsearch:5.6.5'
 ]
 
 function help () {
@@ -45,7 +43,7 @@ function update (image) {
 
 function updateIfUsed (image) {
   log(`Testing ${image}`)
-  let result = execSync(`docker image ls ${image}`).toString()
+  const result = execSync(`docker image ls ${image}`).toString()
   // All images say how long "ago" they were created.. Use this to determine if the image exists, since `wc -l` doesn't work on windows
   if (result.indexOf('ago') === -1) {
     log(`${image} doesn't exist on this system. Skipping update.`)

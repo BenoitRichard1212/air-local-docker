@@ -105,7 +105,7 @@ async function get (key) {
     await read()
   }
 
-  return (typeof config[ key ] === 'undefined') ? defaults[ key ] : config[ key ]
+  return (typeof config[key] === 'undefined') ? defaults[key] : config[key]
 }
 
 async function set (key, value) {
@@ -113,7 +113,7 @@ async function set (key, value) {
     await read()
   }
 
-  config[ key ] = value
+  config[key] = value
 
   await write()
 }

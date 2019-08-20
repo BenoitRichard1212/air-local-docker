@@ -25,7 +25,7 @@ const clear = async function () {
 
 const printInfo = async function () {
   log(chalk.white('Cache Volume Information'))
-  let networks = execSync('docker volume ls --filter name=^airlocalCache$').toString()
+  const networks = execSync('docker volume ls --filter name=^airlocalCache$').toString()
   log(networks)
 }
 

@@ -63,13 +63,13 @@ async function read () {
 }
 
 async function get (key) {
-  let defaults = configure.getDefaults()
+  const defaults = configure.getDefaults()
 
   if (config === null) {
     await read()
   }
 
-  return (typeof config[ key ] === 'undefined') ? defaults[ key ] : config[ key ]
+  return (typeof config[key] === 'undefined') ? defaults[key] : config[key]
 }
 
 async function set (key, value) {
@@ -77,7 +77,7 @@ async function set (key, value) {
     await read()
   }
 
-  config[ key ] = value
+  config[key] = value
 
   await write()
 }
@@ -92,7 +92,7 @@ function envSlug (env) {
 }
 
 async function envPath (env) {
-  let envPath = path.join(await sitesPath(), envSlug(env))
+  const envPath = path.join(await sitesPath(), envSlug(env))
 
   return envPath
 }

@@ -6,14 +6,14 @@ const log = console.log
 const info = chalk.keyword('cyan')
 
 async function download (env) {
-  let envPath = await utils.envPath(env)
+  const envPath = await utils.envPath(env)
 
   log(info('Downloading WordPress'))
   execSync(`docker-compose exec phpfpm su -s /bin/bash www-data -c "wp core download --force"`, { stdio: 'inherit', cwd: envPath })
 }
 
 async function downloadDevelop (env) {
-  let envPath = await utils.envPath(env)
+  const envPath = await utils.envPath(env)
 
   log(info('Downloading WordPress Develop'))
   execSync(`docker-compose exec phpfpm su -s /bin/bash www-data -c "git clone git://develop.git.wordpress.org/ ."`, { stdio: 'inherit', cwd: envPath })
@@ -22,15 +22,15 @@ async function downloadDevelop (env) {
 }
 
 async function configure (env) {
-  let envSlug = utils.envSlug(env)
-  let envPath = await utils.envPath(env)
+  const envSlug = utils.envSlug(env)
+  const envPath = await utils.envPath(env)
 
   log(info('Configuring WordPress'))
   execSync(`docker-compose exec phpfpm su -s /bin/bash www-data -c "wp config create --force --dbname=${envSlug}"`, { stdio: 'inherit', cwd: envPath })
 }
 
 async function install (env, envHost, answers) {
-  let envPath = await utils.envPath(env)
+  const envPath = await utils.envPath(env)
   let command = ''
   let flags = ''
 
@@ -54,13 +54,13 @@ async function install (env, envHost, answers) {
 }
 
 async function setRewrites (env) {
-  let envPath = await utils.envPath(env)
+  const envPath = await utils.envPath(env)
 
   execSync(`docker-compose exec phpfpm su -s /bin/bash www-data -c "wp rewrite structure /%postname%/"`, { stdio: 'inherit', cwd: envPath })
 }
 
 async function emptyContent (env) {
-  let envPath = await utils.envPath(env)
+  const envPath = await utils.envPath(env)
 
   execSync(`docker-compose exec phpfpm su -s /bin/bash www-data -c "wp site empty --yes"`, { stdio: 'inherit', cwd: envPath })
   execSync(`docker-compose exec phpfpm su -s /bin/bash www-data -c "wp plugin delete hello akismet"`, { stdio: 'inherit', cwd: envPath })

@@ -62,13 +62,13 @@ const read = async function () {
 }
 
 const get = async function (key) {
-  let defaults = getAuthDefaults()
+  const defaults = getAuthDefaults()
 
   if (authConfig === null) {
     await read()
   }
 
-  return (typeof authConfig[ key ] === 'undefined') ? defaults[ key ] : authConfig[ key ]
+  return (typeof authConfig[key] === 'undefined') ? defaults[key] : authConfig[key]
 }
 
 const set = async function (key, value) {
@@ -76,7 +76,7 @@ const set = async function (key, value) {
     await read()
   }
 
-  authConfig[ key ] = value
+  authConfig[key] = value
 
   await write()
 }
@@ -113,9 +113,9 @@ const runAuth = async function () {
 }
 
 const prompt = async function () {
-  let currentUser = await get('user')
+  const currentUser = await get('user')
 
-  let questions = [
+  const questions = [
     {
       name: 'airCustomer',
       type: 'confirm',
@@ -153,13 +153,13 @@ const prompt = async function () {
     }
   ]
 
-  let answers = await inquirer.prompt(questions)
+  const answers = await inquirer.prompt(questions)
 
   return answers
 }
 
 const configure = async function () {
-  let answers = await prompt()
+  const answers = await prompt()
 
   await set('airCustomer', answers.airCustomer)
   if (answers.airCustomer === true) {

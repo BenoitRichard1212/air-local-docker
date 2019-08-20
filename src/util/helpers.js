@@ -71,9 +71,9 @@ function parseHostname (value) {
   // Get rid of any spaces
   value = value.replace(/\s/i, '')
 
-  let parts = value.split('/')
+  const parts = value.split('/')
 
-  let hostname = parts[0]
+  const hostname = parts[0]
 
   return hostname
 }
@@ -85,7 +85,7 @@ function parseHostname (value) {
  * @return {string} The validated/modified proxy URL
  */
 function parseProxyUrl (value) {
-  let re = /^https?:\/\//i
+  const re = /^https?:\/\//i
 
   if (value.length > 3 && !re.test(value)) {
     value = 'http://' + value

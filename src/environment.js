@@ -76,10 +76,10 @@ const start = async function (env) {
       env = await envUtil.promptEnv()
     }
 
-    let envPath = await envUtil.getPathOrError(env)
+    const envPath = await envUtil.getPathOrError(env)
 
     // If we got the path from the cwd, we don't have a slug yet, so get it
-    let envSlug = utils.envSlug(env)
+    const envSlug = utils.envSlug(env)
 
     await gateway.startGlobal()
 
@@ -88,12 +88,12 @@ const start = async function (env) {
       execSync(`docker-compose up -d`, { stdio: 'inherit', cwd: envPath })
     } catch (ex) {}
 
-    let envHosts = await envUtil.getEnvHosts(envPath)
+    const envHosts = await envUtil.getEnvHosts(envPath)
     if (envHosts.length > 0) {
       console.log()
       console.log('Environment configured for the following domains:')
       for (let i = 0, len = envHosts.length; i < len; i++) {
-        console.log(envHosts[ i ])
+        console.log(envHosts[i])
       }
     }
 
@@ -114,10 +114,10 @@ const stop = async function (env) {
       env = await envUtil.promptEnv()
     }
 
-    let envPath = await envUtil.getPathOrError(env)
+    const envPath = await envUtil.getPathOrError(env)
 
     // If we got the path from the cwd, we don't have a slug yet, so get it
-    let envSlug = utils.envSlug(env)
+    const envSlug = utils.envSlug(env)
 
     console.log(`Stopping docker containers for ${envSlug}`)
     try {
@@ -140,10 +140,10 @@ const restart = async function (env) {
       env = await envUtil.promptEnv()
     }
 
-    let envPath = await envUtil.getPathOrError(env)
+    const envPath = await envUtil.getPathOrError(env)
 
     // If we got the path from the cwd, we don't have a slug yet, so get it
-    let envSlug = utils.envSlug(env)
+    const envSlug = utils.envSlug(env)
 
     await gateway.startGlobal()
 
@@ -166,10 +166,10 @@ const deleteEnv = async function (env) {
       env = await envUtil.promptEnv()
     }
 
-    let envPath = await envUtil.getPathOrError(env)
-    let envSlug = utils.envSlug(env)
+    const envPath = await envUtil.getPathOrError(env)
+    const envSlug = utils.envSlug(env)
 
-    let answers = await inquirer.prompt({
+    const answers = await inquirer.prompt({
       name: 'confirm',
       type: 'confirm',
       message: `Are you sure you want to delete the ${envSlug} environment`,
@@ -195,11 +195,11 @@ const deleteEnv = async function (env) {
       try {
         console.log('Removing host file entries')
 
-        let sudoOptions = {
+        const sudoOptions = {
           name: 'AIRLocal'
         }
 
-        let envHosts = await envUtil.getEnvHosts(envPath)
+        const envHosts = await envUtil.getEnvHosts(envPath)
         for (let i = 0, len = envHosts.length; i < len; i++) {
           await new Promise(resolve => {
             console.log(` - Removing ${envHosts}`)
@@ -238,33 +238,33 @@ const upgradeEnv = async function (env) {
     env = await envUtil.promptEnv()
   }
 
-  let envPath = await envUtil.getPathOrError(env)
+  const envPath = await envUtil.getPathOrError(env)
 
   // If we got the path from the cwd, we don't have a slug yet, so get it
-  let envSlug = utils.envSlug(env)
+  const envSlug = utils.envSlug(env)
 
-  let yaml = readYaml.sync(path.join(envPath, 'docker-compose.yml'))
+  const yaml = readYaml.sync(path.join(envPath, 'docker-compose.yml'))
 
-  let services = [ 'nginx', 'phpfpm', 'elasticsearch' ]
+  const services = ['nginx', 'phpfpm', 'elasticsearch']
 
   // Update defined services to have all cached volumes
-  for (let service of services) {
-    if (!yaml.services[ service ]) {
+  for (const service of services) {
+    if (!yaml.services[service]) {
       continue
     }
-    for (let key in yaml.services[ service ].volumes) {
-      let volume = yaml.services[ service ].volumes[ key ]
-      let parts = volume.split(':')
+    for (const key in yaml.services[service].volumes) {
+      const volume = yaml.services[service].volumes[key]
+      const parts = volume.split(':')
       if (parts.length !== 3) {
         parts.push('cached')
       }
 
-      yaml.services[ service ].volumes[ key ] = parts.join(':')
+      yaml.services[service].volumes[key] = parts.join(':')
     }
   }
 
   await new Promise(resolve => {
-    writeYaml(path.join(envPath, 'docker-compose.yml'), yaml, { 'lineWidth': 500 }, function (err) {
+    writeYaml(path.join(envPath, 'docker-compose.yml'), yaml, { lineWidth: 500 }, function (err) {
       if (err) {
         console.log(err)
       }
@@ -277,7 +277,7 @@ const upgradeEnv = async function (env) {
 }
 
 const startAll = async function () {
-  let envs = await envUtil.getAllEnvironments()
+  const envs = await envUtil.getAllEnvironments()
 
   await gateway.startGlobal()
 
@@ -287,30 +287,30 @@ const startAll = async function () {
 }
 
 const stopAll = async function () {
-  let envs = await envUtil.getAllEnvironments()
+  const envs = await envUtil.getAllEnvironments()
 
   for (let i = 0, len = envs.length; i < len; i++) {
-    await stop(envs[ i ])
+    await stop(envs[i])
   }
 
   gateway.stopGlobal()
 }
 
 const restartAll = async function () {
-  let envs = await envUtil.getAllEnvironments()
+  const envs = await envUtil.getAllEnvironments()
 
   for (let i = 0, len = envs.length; i < len; i++) {
-    await restart(envs[ i ])
+    await restart(envs[i])
   }
 
   gateway.restartGlobal()
 }
 
 const deleteAll = async function () {
-  let envs = await envUtil.getAllEnvironments()
+  const envs = await envUtil.getAllEnvironments()
 
   for (let i = 0, len = envs.length; i < len; i++) {
-    await deleteEnv(envs[ i ])
+    await deleteEnv(envs[i])
   }
 }
 

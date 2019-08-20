@@ -69,7 +69,7 @@ program
             default: false
           }
         ]
-        let answers = await inquirer.prompt(questions)
+        const answers = await inquirer.prompt(questions)
 
         log(answers.configNow)
 
@@ -297,7 +297,7 @@ program
           default: false
         }
       ]
-      let answers = await inquirer.prompt(questions)
+      const answers = await inquirer.prompt(questions)
 
       if (!answers.configNow) {
         // User doesn't want to configure now, exit

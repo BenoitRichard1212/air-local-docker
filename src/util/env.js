@@ -29,7 +29,7 @@ const parseEnvFromCWD = async function () {
   cwd = cwd.split('/')[0]
 
   // Make sure that a .config.json file exists here
-  let configFile = path.join(sitesPathValue, cwd, '.config.json')
+  const configFile = path.join(sitesPathValue, cwd, '.config.json')
   if (!await fs.exists(configFile)) {
     return false
   }
@@ -38,7 +38,7 @@ const parseEnvFromCWD = async function () {
 }
 
 const getAllEnvironments = async function () {
-  let sitePath = await utils.sitesPath()
+  const sitePath = await utils.sitesPath()
   let dirContent = await fs.readdir(sitePath)
 
   // Make into full path
@@ -48,13 +48,13 @@ const getAllEnvironments = async function () {
 
   // Filter any that aren't directories
   dirContent = await async.filter(dirContent, async item => {
-    let stat = await fs.stat(item)
+    const stat = await fs.stat(item)
     return stat.isDirectory()
   })
 
   // Filter any that don't have the .config.json file (which indicates its probably not a AIRLocal Environment)
   dirContent = await async.filter(dirContent, async item => {
-    let configFile = path.join(item, '.config.json')
+    const configFile = path.join(item, '.config.json')
 
     const config = await fs.exists(configFile)
     return config
@@ -69,9 +69,9 @@ const getAllEnvironments = async function () {
 }
 
 const promptEnv = async function () {
-  let environments = await getAllEnvironments()
+  const environments = await getAllEnvironments()
 
-  let questions = [
+  const questions = [
     {
       name: 'envSlug',
       type: 'list',
@@ -81,7 +81,7 @@ const promptEnv = async function () {
   ]
 
   log(chalk.bold.white('Unable to determine environment from current directory'))
-  let answers = await inquirer.prompt(questions)
+  const answers = await inquirer.prompt(questions)
 
   return answers.envSlug
 }
@@ -98,7 +98,7 @@ const parseOrPromptEnv = async function () {
 
 const getEnvHosts = async function (envPath) {
   try {
-    let envConfig = await fs.readJson(path.join(envPath, '.config.json'))
+    const envConfig = await fs.readJson(path.join(envPath, '.config.json'))
 
     return (typeof envConfig === 'object' && undefined !== envConfig.envHosts) ? envConfig.envHosts : []
   } catch (ex) {
@@ -113,7 +113,7 @@ const getPathOrError = async function (env) {
 
   log(chalk.bold.white(`Locating project files for ${env}`))
 
-  let _envPath = await utils.envPath(env)
+  const _envPath = await utils.envPath(env)
   if (!await fs.pathExists(_envPath)) {
     log(error(`ERROR: Cannot find ${env} environment!`))
     process.exit(1)
@@ -130,7 +130,7 @@ const getPathOrError = async function (env) {
  */
 const createDefaultProxy = function (value) {
   let proxyUrl = 'http://' + helper.removeEndSlashes(value)
-  let proxyUrlTLD = proxyUrl.lastIndexOf('.')
+  const proxyUrlTLD = proxyUrl.lastIndexOf('.')
 
   if (proxyUrlTLD === -1) {
     proxyUrl = proxyUrl + '.com'

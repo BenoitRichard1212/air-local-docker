@@ -12,7 +12,7 @@ let started = false
 const ensureNetworkExists = function () {
   try {
     log(chalk.white('Ensuring global network exists'))
-    let networks = execSync('docker network ls --filter name=^airlocaldocker$').toString()
+    const networks = execSync('docker network ls --filter name=^airlocaldocker$').toString()
     if (networks.indexOf('airlocaldocker') !== -1) {
       log(info(' - Network exists'))
       return
@@ -34,7 +34,7 @@ const removeNetwork = function () {
 const ensureCacheExists = async function () {
   try {
     log(chalk.white('Ensuring global cache volume exists'))
-    let volumes = await exec(`docker volume ls --filter name=${cacheVolume}`).toString()
+    const volumes = await exec(`docker volume ls --filter name=${cacheVolume}`).toString()
     if (volumes.indexOf(`${cacheVolume}`) !== -1) {
       log(info(' - Volume Exists'))
       return
@@ -48,7 +48,7 @@ const ensureCacheExists = async function () {
 const removeCacheVolume = async function () {
   try {
     log(chalk.white('Removing cache volume'))
-    let volumes = await exec(`docker volume ls --filter name=${cacheVolume}`).toString()
+    const volumes = await exec(`docker volume ls --filter name=${cacheVolume}`).toString()
     if (volumes.indexOf(`${cacheVolume}`) === -1) {
       await exec(`docker volume rm ${cacheVolume}`)
       log(info(' - Volume Removed'))
@@ -82,12 +82,12 @@ const occurrences = function (string, subString, allowOverlapping) {
  * Otherwise, we just wait for one occurrence.
  */
 const waitForDB = function () {
-  let firstTimeMatch = 'Initializing database'
-  let readyMatch = 'ready for connections'
+  const firstTimeMatch = 'Initializing database'
+  const readyMatch = 'ready for connections'
   return new Promise(resolve => {
-    let interval = setInterval(() => {
+    const interval = setInterval(() => {
       log(warning('Waiting for mysql...'))
-      let mysql = execSync(`docker-compose logs mysql`, { cwd: globalPath }).toString()
+      const mysql = execSync(`docker-compose logs mysql`, { cwd: globalPath }).toString()
 
       if (mysql.indexOf(readyMatch) !== -1) {
         if (occurrences(mysql, firstTimeMatch, false) !== 0) {
