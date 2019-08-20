@@ -11,6 +11,7 @@ const create = require('./src/create')
 const auth = require('./src/auth')
 const cache = require('./src/cache')
 const snapshots = require('./src/snapshots')
+const shell = require('./src/shell')
 const image = require('./src/image')
 const hosts = require('./src/hosts')
 const environment = require('./src/environment')
@@ -268,10 +269,12 @@ program
   })
 
 program
-  .command('shell')
+  .command('shell [container]')
   .description(info('Opens a shell in a container') + chalk.gray(' (default: phpfpm)'))
-  .action(function (env, cmd) {
-    log('shell', env, cmd)
+  .action(function (container) {
+    shell.command(container)
+  }).on('--help', function () {
+    shell.help()
   })
 
 /**
