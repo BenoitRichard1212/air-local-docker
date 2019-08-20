@@ -15,6 +15,7 @@ const image = require('./src/image')
 const hosts = require('./src/hosts')
 const environment = require('./src/environment')
 const logs = require('./src/logs')
+const wp = require('./src/wp')
 
 const { handleErrors } = require('./src/util/errors')
 const updates = require('./src/util/updates')
@@ -357,10 +358,12 @@ program
   })
 
 program
-  .command('wp')
+  .command('wp [command...]')
   .description(info('Runs a wp-cli command in your current environment'))
-  .action(function (wpCmd) {
-    log('wp', wpCmd)
+  .action(function (command) {
+    wp.command(command)
+  }).on('--help', function () {
+    wp.help()
   })
 
 configure.checkIfConfigured().then(resp => {

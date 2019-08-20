@@ -115,12 +115,12 @@ WIP
 
 Running WP CLI commands against an environment is easy. First, make sure you are somewhere within your environment
 directory (by default, this is somewhere within `~/air-local-docker-sites/<environment>/`). Once within the environment
-directory, simply run `airlocal wp <command>`. `<command>` can be any valid command you would otherwise pass directly
-to WP CLI.
+directory, simply run `airlocal wp "<command>"`. `<command>` can be any valid command you would otherwise pass directly
+to WP CLI. **Make sure to wrap the command in quotes or else it will fail**.
 
 Examples:
-* `airlocal wp search-replace 'mysite.com' 'mysite.test'`
-* `airlocal wp site list`
+* `airlocal wp "search-replace 'mysite.com' 'mysite.test'"`
+* `airlocal wp "site list"`
 
 #### Shell
 
