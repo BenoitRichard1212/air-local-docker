@@ -8,7 +8,7 @@ const log = console.log
 const error = chalk.bold.red
 
 function help () {
-  log(chalk.white('Usage: airlocal wp [command]'))
+  log(chalk.white('Usage: airlocal wp "[command]"'))
   log()
   log(chalk.white('Options:'))
   log(chalk.white('  -h, --help       output usage information'))
