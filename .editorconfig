@@ -7,15 +7,3 @@ insert_final_newline = true
 trim_trailing_whitespace = true
 indent_style = space
 indent_size = 2
-
-[{*.json,*.yml,.babelrc,.bowerrc,.browserslistrc,.postcssrc}]
-indent_style = space
-
-[*.txt,wp-config-sample.php]
-end_of_line = crlf
-
-[*.conf]
-indent_style = space
-
-[*.js]
-indent_style = space
