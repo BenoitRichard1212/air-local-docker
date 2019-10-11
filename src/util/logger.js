@@ -5,7 +5,7 @@ const { utilPath } = require('./variables')
 const utils = require('./utilities')
 
 const loggingWinston = new LoggingWinston({
-  projectId: 'forty-five-air',
+  projectId: 'air-local-docker',
   keyFilename: path.join(utilPath, 'logger.json')
 })
 
