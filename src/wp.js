@@ -23,7 +23,7 @@ const command = async function (wpCmd) {
 
     // Check if the container is running, otherwise, start up the stacks
     try {
-      const output = execSync(`docker-compose ps`, { cwd: envPath }).toString()
+      const output = execSync('docker-compose ps', { cwd: envPath }).toString()
       if (output.indexOf('phpfpm') === -1) {
         await gateway.startGlobal()
         await environment.start(envSlug)

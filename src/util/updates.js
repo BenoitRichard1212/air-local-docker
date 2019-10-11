@@ -19,7 +19,7 @@ async function checkForUpdates () {
   }
 
   if (update) {
-    log(warning('AIRLocal version ') + update.latest + warning('is now available. Please run ') + info('npm update -g air-local-docker') + warning(' to update'))
+    log(warning('AIRLocal version ') + update.latest + warning(' is now available. Please run ') + info('npm update -g air-local-docker') + warning(' to update'))
   }
 }
 

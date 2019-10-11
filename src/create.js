@@ -259,7 +259,10 @@ const createEnv = async function () {
     ],
     dns: [
       '10.0.0.2'
-    ]
+    ],
+    environment: {
+      WP_ENV: 'local'
+    }
   }
 
   if (answers.wordpressType === 'dev' || answers.wordpressType === 'DEV') {
@@ -372,7 +375,7 @@ const createEnv = async function () {
       const hostsstring = allHosts.join(' ')
       sudo.exec(`airlocal-hosts add ${hostsstring}`, sudoOptions, function (error, stdout, stderr) {
         if (error) {
-          console.error(chalk.bold.yellow('Warning: ') + `Something went wrong adding host file entries. You may need to add the /etc/hosts entries manually.`)
+          console.error(chalk.bold.yellow('Warning: ') + 'Something went wrong adding host file entries. You may need to add the /etc/hosts entries manually.')
           resolve()
           return
         }

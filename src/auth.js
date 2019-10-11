@@ -4,6 +4,7 @@ const fs = require('fs-extra')
 const path = require('path')
 const inquirer = require('inquirer')
 const helpers = require('./util/helpers')
+const axios = require('axios')
 const log = console.log
 const info = chalk.keyword('cyan')
 
@@ -83,10 +84,9 @@ const set = async function (key, value) {
 
 const getAuthDefaults = function () {
   return {
-    airCustomer: true,
-    authType: 'github',
-    twoFactor: true,
-    user: ''
+    customer: false,
+    user: '',
+    token: ''
   }
 }
 
@@ -97,7 +97,24 @@ const checkAuth = async function () {
     process.exit()
   }
 
-  console.log(chalk.yellow('Check auth is WIP'))
+  const token = await get('token')
+
+  const options = {
+    headers: { 'Private-Token': token }
+  }
+
+  axios.get('https://devops.45air.co/api/v4/groups?min_access_level=30', options)
+    .then(function (response) {
+      console.log(response.data)
+    })
+    .catch(function (error) {
+      if (error.response) {
+        const errData = error.response.data
+        console.error(chalk.red('Error: ') + chalk.yellow(errData.error_description))
+      } else {
+        console.error(chalk.red('Error: ') + chalk.yellow(error.message))
+      }
+    })
   console.log()
 }
 
@@ -117,38 +134,28 @@ const prompt = async function () {
 
   const questions = [
     {
-      name: 'airCustomer',
+      name: 'customer',
       type: 'confirm',
-      message: 'Are you a 45AIR cloud customer?'
-    },
-    {
-      name: 'authType',
-      type: 'list',
-      message: 'Choose the auth type provisioned for your account:',
-      choices: [
-        { name: 'Github', value: 'github' }
-      ],
-      default: 'github',
-      when: function (answers) {
-        return answers.airCustomer === true
-      }
-    },
-    {
-      name: 'twoFactor',
-      type: 'confirm',
-      message: 'Does your account or org require two-factor auth?',
-      when: function (answers) {
-        return answers.airCustomer === true
-      }
+      message: 'Are you a 45AIR Cloud customer?'
     },
     {
       name: 'user',
       type: 'input',
-      message: 'Enter your auth provider login username or email:',
+      message: 'Enter your devops.45air.co username:',
       default: currentUser || '',
       validate: helpers.validateNotEmpty,
       when: function (answers) {
-        return answers.airCustomer === true
+        return answers.customer === true
+      }
+    },
+    {
+      name: 'token',
+      type: 'password',
+      message: 'Enter your devops.45air.co PAT (Personal Access Token):',
+      default: '',
+      validate: helpers.validateNotEmpty,
+      when: function (answers) {
+        return answers.customer === true
       }
     }
   ]
@@ -161,11 +168,10 @@ const prompt = async function () {
 const configure = async function () {
   const answers = await prompt()
 
-  await set('airCustomer', answers.airCustomer)
-  if (answers.airCustomer === true) {
-    await set('authType', answers.authType)
-    await set('twoFactor', answers.twoFactor)
+  await set('customer', answers.customer)
+  if (answers.customer === true) {
     await set('user', answers.user)
+    await set('token', answers.token)
   }
 
   console.log(chalk.green('AIR Cloud Auth Configured!'))
