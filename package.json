@@ -60,11 +60,9 @@
     }
   },
   "lint-staged": {
-    "linters": {
-      "**/*": [
-        "prettier-standard --lint",
-        "git add"
-      ]
-    }
+    "**/*": [
+      "prettier-standard --lint",
+      "git add"
+    ]
   }
 }
