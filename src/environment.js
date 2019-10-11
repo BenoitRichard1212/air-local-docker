@@ -85,7 +85,7 @@ const start = async function (env) {
 
     console.log(`Starting docker containers for ${envSlug}`)
     try {
-      execSync(`docker-compose up -d`, { stdio: 'inherit', cwd: envPath })
+      execSync('docker-compose up -d', { stdio: 'inherit', cwd: envPath })
     } catch (ex) {}
 
     const envHosts = await envUtil.getEnvHosts(envPath)
@@ -121,7 +121,7 @@ const stop = async function (env) {
 
     console.log(`Stopping docker containers for ${envSlug}`)
     try {
-      execSync(`docker-compose down`, { stdio: 'inherit', cwd: envPath })
+      execSync('docker-compose down', { stdio: 'inherit', cwd: envPath })
     } catch (ex) {}
     console.log()
   }
@@ -149,7 +149,7 @@ const restart = async function (env) {
 
     console.log(`Restarting docker containers for ${envSlug}`)
     try {
-      execSync(`docker-compose restart`, { stdio: 'inherit', cwd: envPath })
+      execSync('docker-compose restart', { stdio: 'inherit', cwd: envPath })
     } catch (ex) {
     // Usually because the environment isn't running
     }
@@ -186,7 +186,7 @@ const deleteEnv = async function (env) {
     // Stop the environment, and ensure volumes are deleted with it
     console.log('Deleting containers')
     try {
-      execSync(`docker-compose down -v`, { stdio: 'inherit', cwd: envPath })
+      execSync('docker-compose down -v', { stdio: 'inherit', cwd: envPath })
     } catch (ex) {
     // If the docker-compose file is already gone, this happens
     }

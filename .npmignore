@@ -1,4 +1,8 @@
 .vscode
-node_modules
-.eslintrc
 .gitignore
+.nyc_output
+.gitkeep
+tests
+.editorconfig
+.npmignore
+.eslintrc

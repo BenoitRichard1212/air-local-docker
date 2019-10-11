@@ -10,6 +10,7 @@ async function checkForUpdates () {
   let update = null
 
   try {
+    // Cache result for 24 hours
     update = await checkForUpdate(pjson, {
       interval: 3600000
     })

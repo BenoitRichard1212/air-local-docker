@@ -28,3 +28,7 @@ scss-lint-report.xml
 config.codekit
 
 notes.md
+
+.nyc_output
+dist/*
+!dist/.gitkeep

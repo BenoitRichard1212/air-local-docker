@@ -13,7 +13,7 @@ const getConnection = function () {
 const create = async function (dbname) {
   const connection = getConnection()
 
-  await new Promise((resolve, reject) => {
+      await new Promise((resolve, reject) => {
     connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbname}\`;`, function (err, results) {
       connection.destroy()
 
