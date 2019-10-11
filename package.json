@@ -9,7 +9,8 @@
     "airlocal-hosts": "node ./hosts.js",
     "test": "modern test",
     "format": "modern format",
-    "lint": "modern lint"
+    "lint": "modern lint",
+    "precommit": "lint-staged"
   },
   "bin": {
     "airlocal": "./index.js",
@@ -59,9 +60,11 @@
     }
   },
   "lint-staged": {
-    "*.js": [
-      "eslint --fix",
-      "git add"
-    ]
+    "linters": {
+      "**/*": [
+        "prettier-standard --lint",
+        "git add"
+      ]
+    }
   }
 }
