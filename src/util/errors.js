@@ -10,7 +10,7 @@ const info = chalk.keyword('cyan')
 
 function handleErrors () {
   // Unhandled promise rejection
-  process.on('unhandledRejection', async (reason) => {
+  process.on('unhandledRejection', async reason => {
     const share = await configure.get('shareErrors')
     if (share) {
       logger.add(loggingWinston)
@@ -18,13 +18,16 @@ function handleErrors () {
 
     log()
     log(error('ERROR: Something unfortunate happened'))
-    log('You can check the error log at ' + info(path.join(utils.getConfigDirectory(), 'error.log')))
+    log(
+      'You can check the error log at ' +
+        info(path.join(utils.getConfigDirectory(), 'error.log'))
+    )
     log()
     logger.log('error', 'unhandledRejection: ', reason)
   })
 
   // Uncaught error handling
-  process.on('uncaughtException', async (err) => {
+  process.on('uncaughtException', async err => {
     const share = await configure.get('shareErrors')
     if (share) {
       logger.add(loggingWinston)
@@ -32,7 +35,10 @@ function handleErrors () {
 
     log()
     log(error('ERROR: Something unfortunate happened'))
-    log('You can check the error log at ' + info(path.join(utils.getConfigDirectory(), 'error.log')))
+    log(
+      'You can check the error log at ' +
+        info(path.join(utils.getConfigDirectory(), 'error.log'))
+    )
     log()
     logger.log('error', 'uncaughtException: ', err)
   })

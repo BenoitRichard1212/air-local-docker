@@ -69,7 +69,7 @@ async function get (key) {
     await read()
   }
 
-  return (typeof config[key] === 'undefined') ? defaults[key] : config[key]
+  return typeof config[key] === 'undefined' ? defaults[key] : config[key]
 }
 
 async function set (key, value) {
@@ -106,7 +106,12 @@ function checkIfDockerRunning () {
     return false
   }
 
-  if (output.toString().toLowerCase().indexOf('version') === -1) {
+  if (
+    output
+      .toString()
+      .toLowerCase()
+      .indexOf('version') === -1
+  ) {
     return false
   }
 
@@ -118,4 +123,19 @@ async function shareErrors () {
   return sharing
 }
 
-module.exports = { checkIfDockerRunning, envPath, sitesPath, envSlug, get, set, read, write, configFileExists, getConfigFilePath, getConfigDirectory, resolveHome, async, shareErrors }
+module.exports = {
+  checkIfDockerRunning,
+  envPath,
+  sitesPath,
+  envSlug,
+  get,
+  set,
+  read,
+  write,
+  configFileExists,
+  getConfigFilePath,
+  getConfigDirectory,
+  resolveHome,
+  async,
+  shareErrors
+}

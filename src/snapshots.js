@@ -11,7 +11,10 @@ function help () {
   log(chalk.white('  -h, --help       output usage information'))
   log()
   log(chalk.white('Commands:'))
-  log(chalk.white('  create           ') + info('Create a DB snapshot for the current env'))
+  log(
+    chalk.white('  create           ') +
+      info('Create a DB snapshot for the current env')
+  )
 }
 
 async function getSnapshotsDir () {

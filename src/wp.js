@@ -17,7 +17,11 @@ function help () {
 const command = async function (wpCmd) {
   const envSlug = await envUtils.parseOrPromptEnv()
   if (envSlug === false) {
-    log(error('Error: Unable to determine which environment to use WP CLI with. Please run this command from within your environment\'s directory.'))
+    log(
+      error(
+        "Error: Unable to determine which environment to use WP CLI with. Please run this command from within your environment's directory."
+      )
+    )
   } else {
     const envPath = await utils.envPath(envSlug)
 
@@ -37,7 +41,10 @@ const command = async function (wpCmd) {
 
     // Run the command
     try {
-      execSync(`docker-compose exec ${ttyFlag} --user www-data phpfpm wp ${wpCmd}`, { stdio: 'inherit', cwd: envPath })
+      execSync(
+        `docker-compose exec ${ttyFlag} --user www-data phpfpm wp ${wpCmd}`,
+        { stdio: 'inherit', cwd: envPath }
+      )
     } catch (ex) {}
   }
 }

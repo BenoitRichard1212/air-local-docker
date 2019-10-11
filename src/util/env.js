@@ -30,7 +30,7 @@ const parseEnvFromCWD = async function () {
 
   // Make sure that a .config.json file exists here
   const configFile = path.join(sitesPathValue, cwd, '.config.json')
-  if (!await fs.exists(configFile)) {
+  if (!(await fs.exists(configFile))) {
     return false
   }
 
@@ -80,7 +80,9 @@ const promptEnv = async function () {
     }
   ]
 
-  log(chalk.bold.white('Unable to determine environment from current directory'))
+  log(
+    chalk.bold.white('Unable to determine environment from current directory')
+  )
   const answers = await inquirer.prompt(questions)
 
   return answers.envSlug
@@ -100,7 +102,9 @@ const getEnvHosts = async function (envPath) {
   try {
     const envConfig = await fs.readJson(path.join(envPath, '.config.json'))
 
-    return (typeof envConfig === 'object' && undefined !== envConfig.envHosts) ? envConfig.envHosts : []
+    return typeof envConfig === 'object' && undefined !== envConfig.envHosts
+      ? envConfig.envHosts
+      : []
   } catch (ex) {
     return []
   }
@@ -114,7 +118,7 @@ const getPathOrError = async function (env) {
   log(chalk.bold.white(`Locating project files for ${env}`))
 
   const _envPath = await utils.envPath(env)
-  if (!await fs.pathExists(_envPath)) {
+  if (!(await fs.pathExists(_envPath))) {
     log(error(`ERROR: Cannot find ${env} environment!`))
     process.exit(1)
   }
@@ -141,4 +145,12 @@ const createDefaultProxy = function (value) {
   return proxyUrl
 }
 
-module.exports = { parseEnvFromCWD, getAllEnvironments, promptEnv, parseOrPromptEnv, getEnvHosts, getPathOrError, createDefaultProxy }
+module.exports = {
+  parseEnvFromCWD,
+  getAllEnvironments,
+  promptEnv,
+  parseOrPromptEnv,
+  getEnvHosts,
+  getPathOrError,
+  createDefaultProxy
+}

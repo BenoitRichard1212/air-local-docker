@@ -19,8 +19,14 @@ function help () {
   log()
   log(chalk.white('Commands:'))
   log(chalk.white('  configure          ') + info('Setup AIR authentication'))
-  log(chalk.white('  status             ') + info('Show AIR authentication status'))
-  log(chalk.white('  run                ') + info('Run the AIR authentication flow'))
+  log(
+    chalk.white('  status             ') +
+      info('Show AIR authentication status')
+  )
+  log(
+    chalk.white('  run                ') +
+      info('Run the AIR authentication flow')
+  )
 }
 
 const getAuthConfigDirectory = function () {
@@ -69,7 +75,9 @@ const get = async function (key) {
     await read()
   }
 
-  return (typeof authConfig[key] === 'undefined') ? defaults[key] : authConfig[key]
+  return typeof authConfig[key] === 'undefined'
+    ? defaults[key]
+    : authConfig[key]
 }
 
 const set = async function (key, value) {
@@ -91,8 +99,11 @@ const getAuthDefaults = function () {
 }
 
 const checkAuth = async function () {
-  if (await checkIfConfigured() === false) {
-    console.error(chalk.red('Error: ') + "Auth not configured. Please run 'airlocal auth config' before continuing.")
+  if ((await checkIfConfigured()) === false) {
+    console.error(
+      chalk.red('Error: ') +
+        "Auth not configured. Please run 'airlocal auth config' before continuing."
+    )
     console.log()
     process.exit()
   }
@@ -103,14 +114,17 @@ const checkAuth = async function () {
     headers: { 'Private-Token': token }
   }
 
-  axios.get('https://devops.45air.co/api/v4/groups?min_access_level=30', options)
+  axios
+    .get('https://devops.45air.co/api/v4/groups?min_access_level=30', options)
     .then(function (response) {
       console.log(response.data)
     })
     .catch(function (error) {
       if (error.response) {
         const errData = error.response.data
-        console.error(chalk.red('Error: ') + chalk.yellow(errData.error_description))
+        console.error(
+          chalk.red('Error: ') + chalk.yellow(errData.error_description)
+        )
       } else {
         console.error(chalk.red('Error: ') + chalk.yellow(error.message))
       }
@@ -119,8 +133,11 @@ const checkAuth = async function () {
 }
 
 const runAuth = async function () {
-  if (await checkIfConfigured() === false) {
-    console.error(chalk.red('Error: ') + "Auth not configured. Please run 'airlocal auth config' before continuing.")
+  if ((await checkIfConfigured()) === false) {
+    console.error(
+      chalk.red('Error: ') +
+        "Auth not configured. Please run 'airlocal auth config' before continuing."
+    )
     console.log()
     process.exit()
   }
@@ -178,4 +195,13 @@ const configure = async function () {
   console.log()
 }
 
-module.exports = { help, configure, checkIfAuthConfigured, get, set, getAuthConfigDirectory, checkAuth, runAuth }
+module.exports = {
+  help,
+  configure,
+  checkIfAuthConfigured,
+  get,
+  set,
+  getAuthConfigDirectory,
+  checkAuth,
+  runAuth
+}

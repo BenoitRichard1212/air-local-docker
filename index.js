@@ -45,7 +45,9 @@ const program = new commander.Command()
  */
 program
   .command('auth [cmd]')
-  .description(info('Set up authentication for AIR customers') + chalk.gray(' (optional)'))
+  .description(
+    info('Set up authentication for AIR customers') + chalk.gray(' (optional)')
+  )
   .action(async function (cmd) {
     // Valid subcommands
     const valid = ['configure', 'status', 'run']
@@ -61,7 +63,10 @@ program
       const authConfigured = await auth.checkIfAuthConfigured()
       // If auth not configured lets try and get that done now by prompting the user
       if (!authConfigured) {
-        log(error('Error: ') + warning('You need to configure AIR authentication first'))
+        log(
+          error('Error: ') +
+            warning('You need to configure AIR authentication first')
+        )
 
         const questions = [
           {
@@ -76,7 +81,7 @@ program
         log(answers.configNow)
 
         if (!answers.configNow) {
-        // User doesn't want to configure now, exit
+          // User doesn't want to configure now, exit
           log(error('Not configuring authentication!'))
         } else {
           // Start the auth configuration flow
@@ -89,7 +94,8 @@ program
         auth.runAuth()
       }
     }
-  }).on('--help', function () {
+  })
+  .on('--help', function () {
     // When help flag is called for auth command
     auth.help()
   })
@@ -121,7 +127,8 @@ program
       // Clear the build cache volume
       cache.clear()
     }
-  }).on('--help', function () {
+  })
+  .on('--help', function () {
     // When help flag is called for auth command
     cache.help()
   })
@@ -129,7 +136,7 @@ program
 /**
  * AIRLOCAL CONFIGURE
  * Alias: config
-*/
+ */
 program
   .command('configure')
   .alias('config')
@@ -141,7 +148,7 @@ program
 /**
  * AIRLOCAL CREATE
  * Alias: new
-*/
+ */
 program
   .command('create')
   .alias('new')
@@ -161,7 +168,8 @@ program
   .description(info('Deletes a specific docker environment'))
   .action(function (env) {
     environment.deleteEnv(env)
-  }).on('--help', function () {
+  })
+  .on('--help', function () {
     environment.deleteHelp()
   })
 
@@ -203,7 +211,8 @@ program
     if (cmd === 'list') {
       hosts.list()
     }
-  }).on('--help', function () {
+  })
+  .on('--help', function () {
     hosts.help()
   })
 
@@ -233,7 +242,8 @@ program
         image.update(img)
       }
     }
-  }).on('--help', function () {
+  })
+  .on('--help', function () {
     image.help()
   })
 
@@ -242,14 +252,17 @@ program
  */
 program
   .command('logs [container]')
-  .description(info('Streams docker logs') + chalk.gray(' (default: all containers)'))
+  .description(
+    info('Streams docker logs') + chalk.gray(' (default: all containers)')
+  )
   .action(function (container) {
     if (!container) {
       logs.command('')
     } else {
       logs.command(container)
     }
-  }).on('--help', function () {
+  })
+  .on('--help', function () {
     logs.help()
   })
 
@@ -264,16 +277,20 @@ program
   .description(info('Restarts a specific docker environment'))
   .action(function (env, cmd) {
     environment.restart(env)
-  }).on('--help', function () {
+  })
+  .on('--help', function () {
     environment.restartHelp()
   })
 
 program
   .command('shell [container]')
-  .description(info('Opens a shell in a container') + chalk.gray(' (default: phpfpm)'))
+  .description(
+    info('Opens a shell in a container') + chalk.gray(' (default: phpfpm)')
+  )
   .action(function (container) {
     shell.command(container)
-  }).on('--help', function () {
+  })
+  .on('--help', function () {
     shell.help()
   })
 
@@ -291,7 +308,10 @@ program
 
     // If auth not configured lets try and get that done now by prompting the user
     if (!authConfigured) {
-      log(error('Error: ') + warning('You need to configure AIR authentication first'))
+      log(
+        error('Error: ') +
+          warning('You need to configure AIR authentication first')
+      )
 
       const questions = [
         {
@@ -314,7 +334,8 @@ program
     }
 
     log('WIP')
-  }).on('--help', function () {
+  })
+  .on('--help', function () {
     snapshots.help()
   })
 
@@ -329,7 +350,8 @@ program
   .description(info('Starts a specific web local environment'))
   .action(function (env) {
     environment.start(env)
-  }).on('--help', function () {
+  })
+  .on('--help', function () {
     environment.startHelp()
   })
 
@@ -344,7 +366,8 @@ program
   .description(info('Stops a specific docker environment'))
   .action(function (env) {
     environment.stop(env)
-  }).on('--help', function () {
+  })
+  .on('--help', function () {
     environment.stopHelp()
   })
 
@@ -365,7 +388,8 @@ program
   .description(info('Runs a wp-cli command in your current environment'))
   .action(function (command) {
     wp.command(command)
-  }).on('--help', function () {
+  })
+  .on('--help', function () {
     wp.help()
   })
 

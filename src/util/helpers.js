@@ -32,7 +32,7 @@ function removeEndSlashes (string) {
  * @returns {string|boolean}
  */
 function validateNotEmpty (value) {
-  return (value.trim().length !== 0) ? true : 'This field is required'
+  return value.trim().length !== 0 ? true : 'This field is required'
 }
 
 /**
@@ -94,4 +94,12 @@ function parseProxyUrl (value) {
   return removeEndSlashes(value)
 }
 
-module.exports = { parseProxyUrl, parseHostname, validateBool, validateNotEmpty, removeEndSlashes, unleadingslashit, untrailingslashit }
+module.exports = {
+  parseProxyUrl,
+  parseHostname,
+  validateBool,
+  validateNotEmpty,
+  removeEndSlashes,
+  unleadingslashit,
+  untrailingslashit
+}

@@ -12,8 +12,13 @@ function help () {
   log(chalk.white('  -h, --help       output usage information'))
   log()
   log(chalk.white('Commands:'))
-  log(chalk.white('  clear            ') + info('Clears WP-CLI, NPM, and AIRSnapshots caches'))
-  log(chalk.white('  info             ') + info('Show AIR authentication status'))
+  log(
+    chalk.white('  clear            ') +
+      info('Clears WP-CLI, NPM, and AIRSnapshots caches')
+  )
+  log(
+    chalk.white('  info             ') + info('Show AIR authentication status')
+  )
 }
 
 const clear = async function () {
@@ -25,7 +30,9 @@ const clear = async function () {
 
 const printInfo = async function () {
   log(chalk.white('Cache Volume Information'))
-  const networks = execSync('docker volume ls --filter name=^airlocalCache$').toString()
+  const networks = execSync(
+    'docker volume ls --filter name=^airlocalCache$'
+  ).toString()
   log(networks)
 }
 

@@ -29,8 +29,14 @@ function help () {
   log(chalk.white('  -h, --help         output usage information'))
   log()
   log(chalk.white('Commands:'))
-  log(chalk.white('  update all         ') + info('Updates all images used to their latest tagged version'))
-  log(chalk.white('  update [img]       ') + info('Updates image passed to the latest tagged version'))
+  log(
+    chalk.white('  update all         ') +
+      info('Updates all images used to their latest tagged version')
+  )
+  log(
+    chalk.white('  update [img]       ') +
+      info('Updates image passed to the latest tagged version')
+  )
 }
 
 function update (image) {

@@ -1,4 +1,5 @@
 const chalk = require('chalk')
+const isPortReachable = require('is-port-reachable')
 const log = console.log
 const info = chalk.keyword('cyan')
 const warning = chalk.keyword('orange')
@@ -12,7 +13,9 @@ let started = false
 const ensureNetworkExists = function () {
   try {
     log(chalk.white('Ensuring global network exists'))
-    const networks = execSync('docker network ls --filter name=^airlocaldocker$').toString()
+    const networks = execSync(
+      'docker network ls --filter name=^airlocaldocker$'
+    ).toString()
     if (networks.indexOf('airlocaldocker') !== -1) {
       log(info(' - Network exists'))
       return
@@ -20,7 +23,9 @@ const ensureNetworkExists = function () {
 
     log(info(' - Creating network'))
     // --ip-range is only half of the subnet, so that we have a bunch of addresses in front to assign manually
-    execSync('docker network create airlocaldocker --subnet=10.0.0.0/16 --gateway 10.0.0.1 --ip-range 10.0.128.0/17')
+    execSync(
+      'docker network create airlocaldocker --subnet=10.0.0.0/16 --gateway 10.0.0.1 --ip-range 10.0.128.0/17'
+    )
   } catch (ex) {}
 }
 
@@ -34,7 +39,9 @@ const removeNetwork = function () {
 const ensureCacheExists = async function () {
   try {
     log(chalk.white('Ensuring global cache volume exists'))
-    const volumes = await exec(`docker volume ls --filter name=${cacheVolume}`).toString()
+    const volumes = await exec(
+      `docker volume ls --filter name=${cacheVolume}`
+    ).toString()
     if (volumes.indexOf(`${cacheVolume}`) !== -1) {
       log(info(' - Volume Exists'))
       return
@@ -48,7 +55,9 @@ const ensureCacheExists = async function () {
 const removeCacheVolume = async function () {
   try {
     log(chalk.white('Removing cache volume'))
-    const volumes = await exec(`docker volume ls --filter name=${cacheVolume}`).toString()
+    const volumes = await exec(
+      `docker volume ls --filter name=${cacheVolume}`
+    ).toString()
     if (volumes.indexOf(`${cacheVolume}`) === -1) {
       await exec(`docker volume rm ${cacheVolume}`)
       log(info(' - Volume Removed'))
@@ -59,7 +68,7 @@ const removeCacheVolume = async function () {
 const occurrences = function (string, subString, allowOverlapping) {
   string += ''
   subString += ''
-  if (subString.length <= 0) return (string.length + 1)
+  if (subString.length <= 0) return string.length + 1
 
   var n = 0
   var pos = 0
@@ -87,7 +96,9 @@ const waitForDB = function () {
   return new Promise(resolve => {
     const interval = setInterval(() => {
       log(warning('Waiting for mysql...'))
-      const mysql = execSync('docker-compose logs mysql', { cwd: globalPath }).toString()
+      const mysql = execSync('docker-compose logs mysql', {
+        cwd: globalPath
+      }).toString()
 
       if (mysql.indexOf(readyMatch) !== -1) {
         if (occurrences(mysql, firstTimeMatch, false) !== 0) {
@@ -110,7 +121,12 @@ const waitForDB = function () {
 
 const startGateway = async function () {
   log(chalk.white('Ensuring global services are running'))
-  execSync('docker-compose up -d', { stdio: 'inherit', cwd: globalPath })
+
+  try {
+    execSync('docker-compose up -d', { stdio: 'inherit', cwd: globalPath })
+  } catch (err) {
+    console.log(err)
+  }
 
   await waitForDB()
   log()
@@ -132,6 +148,21 @@ const startGlobal = async function () {
   if (started === true) {
     return
   }
+
+  const dbPort = await isPortReachable(3306)
+  const mailhogPort = await isPortReachable(1025)
+  const mailhogPortExtra = await isPortReachable(1080)
+
+  if (dbPort || mailhogPort || mailhogPortExtra) {
+    log(
+      chalk.bold.yellow('Warning: ') +
+        chalk.yellow(
+          'You have ports in use already that will conflict with AIRLocal'
+        )
+    )
+    process.exit(1)
+  }
+
   ensureNetworkExists()
   await ensureCacheExists()
   await startGateway()
@@ -153,4 +184,10 @@ const restartGlobal = function () {
   started = true
 }
 
-module.exports = { startGlobal, stopGlobal, restartGlobal, removeCacheVolume, ensureCacheExists }
+module.exports = {
+  startGlobal,
+  stopGlobal,
+  restartGlobal,
+  removeCacheVolume,
+  ensureCacheExists
+}

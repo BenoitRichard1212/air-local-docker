@@ -15,11 +15,21 @@ async function checkForUpdates () {
       interval: 3600000
     })
   } catch (err) {
-    log(error('Warning: Failed to automatically check for updates. Please ensure AIRLocal is up to date manually'))
+    log(
+      error(
+        'Warning: Failed to automatically check for updates. Please ensure AIRLocal is up to date manually'
+      )
+    )
   }
 
   if (update) {
-    log(warning('AIRLocal version ') + update.latest + warning(' is now available. Please run ') + info('npm update -g air-local-docker') + warning(' to update'))
+    log(
+      warning('AIRLocal version ') +
+        update.latest +
+        warning(' is now available. Please run ') +
+        info('npm update -g air-local-docker') +
+        warning(' to update')
+    )
   }
 }
 

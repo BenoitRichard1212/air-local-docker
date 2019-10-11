@@ -27,20 +27,10 @@ const createEnv = async function () {
       },
       nginx: {
         image: '45air/nginx:latest',
-        expose: [
-          '80',
-          '443'
-        ],
-        volumes: [
-          './wordpress:/var/www/web:cached'
-        ],
-        depends_on: [
-          'phpfpm'
-        ],
-        networks: [
-          'default',
-          'airlocaldocker'
-        ],
+        expose: ['80', '443'],
+        volumes: ['./wordpress:/var/www/web:cached'],
+        depends_on: ['phpfpm'],
+        networks: ['default', 'airlocaldocker'],
         environment: {
           CERT_NAME: 'localhost',
           HTTPS_METHOD: 'noredirect'
@@ -85,13 +75,18 @@ const createEnv = async function () {
     {
       name: 'extraHosts',
       type: 'input',
-      message: 'Enter additional hostnames separated by spaces (Ex: docker1.test docker2.test)',
+      message:
+        'Enter additional hostnames separated by spaces (Ex: docker1.test docker2.test)',
       filter: async function (value) {
-        const answers = value.split(' ').map(function (value) {
-          return value.trim()
-        }).filter(function (value) {
-          return value.length > 0
-        }).map(helpers.parseHostname)
+        const answers = value
+          .split(' ')
+          .map(function (value) {
+            return value.trim()
+          })
+          .filter(function (value) {
+            return value.length > 0
+          })
+          .map(helpers.parseHostname)
 
         return answers
       },
@@ -102,7 +97,8 @@ const createEnv = async function () {
     {
       name: 'mediaProxy',
       type: 'confirm',
-      message: 'Do you want to set a proxy for media assets? (i.e. Serving /uploads/ directory assets from a production site)',
+      message:
+        'Do you want to set a proxy for media assets? (i.e. Serving /uploads/ directory assets from a production site)',
       default: false
     },
     {
@@ -212,9 +208,17 @@ const createEnv = async function () {
   // Default nginx configuration file
   let nginxConfig = 'default.conf'
 
-  if (await fs.exists(envPath) === true) {
+  if ((await fs.exists(envPath)) === true) {
     log()
-    log(error('Error: ') + error(envHost) + error(' environment already exists. To recreate the environment, please delete it first by running ') + info('airlocal delete ') + info(envHost))
+    log(
+      error('Error: ') +
+        error(envHost) +
+        error(
+          ' environment already exists. To recreate the environment, please delete it first by running '
+        ) +
+        info('airlocal delete ') +
+        info(envHost)
+    )
     process.exit(1)
   }
 
@@ -239,7 +243,9 @@ const createEnv = async function () {
   })
 
   // Additional nginx config based on selections above
-  baseConfig.services.nginx.environment.VIRTUAL_HOST = allHosts.concat(starHosts).join(',')
+  baseConfig.services.nginx.environment.VIRTUAL_HOST = allHosts
+    .concat(starHosts)
+    .join(',')
 
   baseConfig.services.phpfpm = {
     image: '45air/phpfpm:' + answers.phpVersion,
@@ -250,39 +256,36 @@ const createEnv = async function () {
       `${cacheVolume}:/var/www/.wp-cli/cache:cached`,
       '~/.ssh:/root/.ssh:cached'
     ],
-    depends_on: [
-      'redis'
-    ],
-    networks: [
-      'default',
-      'airlocaldocker'
-    ],
-    dns: [
-      '10.0.0.2'
-    ],
+    depends_on: ['redis'],
+    networks: ['default', 'airlocaldocker'],
+    dns: ['10.0.0.2'],
     environment: {
       WP_ENV: 'local'
     }
   }
 
   if (answers.wordpressType === 'dev' || answers.wordpressType === 'DEV') {
-    baseConfig.services.phpfpm.volumes.push('./config/php-fpm/wp-cli.develop.yml:/var/www/.wp-cli/config.yml:cached')
+    baseConfig.services.phpfpm.volumes.push(
+      './config/php-fpm/wp-cli.develop.yml:/var/www/.wp-cli/config.yml:cached'
+    )
     nginxConfig = 'develop.conf'
   } else {
-    baseConfig.services.phpfpm.volumes.push('./config/php-fpm/wp-cli.local.yml:/var/www/.wp-cli/config.yml:cached')
+    baseConfig.services.phpfpm.volumes.push(
+      './config/php-fpm/wp-cli.local.yml:/var/www/.wp-cli/config.yml:cached'
+    )
   }
 
   // Map the nginx configuraiton file
-  baseConfig.services.nginx.volumes.push('./config/nginx/' + nginxConfig + ':/etc/nginx/conf.d/default.conf:cached')
+  baseConfig.services.nginx.volumes.push(
+    './config/nginx/' + nginxConfig + ':/etc/nginx/conf.d/default.conf:cached'
+  )
 
   if (answers.elasticsearch === true) {
     baseConfig.services.phpfpm.depends_on.push('elasticsearch')
 
     baseConfig.services.elasticsearch = {
       image: 'docker.elastic.co/elasticsearch/elasticsearch:5.6.5',
-      expose: [
-        '9200'
-      ],
+      expose: ['9200'],
       volumes: [
         './config/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:cached',
         './config/elasticsearch/plugins:/usr/share/elasticsearch/plugins:cached',
@@ -306,13 +309,18 @@ const createEnv = async function () {
   console.log('Generating docker-compose.yml file...')
   const dockerCompose = Object.assign(baseConfig, networkConfig, volumeConfig)
   await new Promise(resolve => {
-    yaml(path.join(envPath, 'docker-compose.yml'), dockerCompose, { lineWidth: 500 }, function (err) {
-      if (err) {
-        console.log(err)
+    yaml(
+      path.join(envPath, 'docker-compose.yml'),
+      dockerCompose,
+      { lineWidth: 500 },
+      function (err) {
+        if (err) {
+          console.log(err)
+        }
+        console.log('done')
+        resolve()
       }
-      console.log('done')
-      resolve()
-    })
+    )
   })
 
   // Media proxy is selected
@@ -321,23 +329,40 @@ const createEnv = async function () {
     console.log('Writing proxy configuration...')
 
     await new Promise(resolve => {
-      fs.readFile(path.join(envPath, 'config', 'nginx', nginxConfig), 'utf8', function (err, curConfig) {
-        if (err) {
-          console.error(chalk.bold.yellow('Warning: ') + 'Failed to read nginx configuration file. Your media proxy has not been set. Error: ' + err)
-          resolve()
-          return
-        }
-
-        fs.writeFile(path.join(envPath, 'config', 'nginx', nginxConfig), config.createProxyConfig(answers.proxy, curConfig), 'utf8', function (err) {
+      fs.readFile(
+        path.join(envPath, 'config', 'nginx', nginxConfig),
+        'utf8',
+        function (err, curConfig) {
           if (err) {
-            console.error(chalk.bold.yellow('Warning: ') + 'Failed to write configuration file. Your media proxy has not been set. Error: ' + err)
+            console.error(
+              chalk.bold.yellow('Warning: ') +
+                'Failed to read nginx configuration file. Your media proxy has not been set. Error: ' +
+                err
+            )
             resolve()
+            return
           }
-        })
 
-        console.log('Proxy configured')
-        resolve()
-      })
+          fs.writeFile(
+            path.join(envPath, 'config', 'nginx', nginxConfig),
+            config.createProxyConfig(answers.proxy, curConfig),
+            'utf8',
+            function (err) {
+              if (err) {
+                console.error(
+                  chalk.bold.yellow('Warning: ') +
+                    'Failed to write configuration file. Your media proxy has not been set. Error: ' +
+                    err
+                )
+                resolve()
+              }
+            }
+          )
+
+          console.log('Proxy configured')
+          resolve()
+        }
+      )
     })
   }
 
@@ -366,16 +391,23 @@ const createEnv = async function () {
     }
   }
 
-  if (await config.get('manageHosts') === true) {
+  if ((await config.get('manageHosts')) === true) {
     console.log('Adding entry to hosts file')
     const sudoOptions = {
       name: 'AIRLocal'
     }
     await new Promise(resolve => {
       const hostsstring = allHosts.join(' ')
-      sudo.exec(`airlocal-hosts add ${hostsstring}`, sudoOptions, function (error, stdout, stderr) {
+      sudo.exec(`airlocal-hosts add ${hostsstring}`, sudoOptions, function (
+        error,
+        stdout,
+        stderr
+      ) {
         if (error) {
-          console.error(chalk.bold.yellow('Warning: ') + 'Something went wrong adding host file entries. You may need to add the /etc/hosts entries manually.')
+          console.error(
+            chalk.bold.yellow('Warning: ') +
+              'Something went wrong adding host file entries. You may need to add the /etc/hosts entries manually.'
+          )
           resolve()
           return
         }
@@ -396,7 +428,9 @@ const createEnv = async function () {
   console.log('Successfully Created Site!')
 
   if (answers.wordpressType === 'subdomain') {
-    console.log('Note: Subdomain multisites require any additional subdomains to be added manually to your hosts file!')
+    console.log(
+      'Note: Subdomain multisites require any additional subdomains to be added manually to your hosts file!'
+    )
   }
 }
 

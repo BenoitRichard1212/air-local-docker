@@ -15,14 +15,24 @@ function help () {
   log(chalk.white('  -h, --help         output usage information'))
   log()
   log(chalk.white('Usage:'))
-  log(chalk.white('  logs               ') + info('Show all logs for all running containers'))
-  log(chalk.white('  logs [container]   ') + info('Show logs for a specific container'))
+  log(
+    chalk.white('  logs               ') +
+      info('Show all logs for all running containers')
+  )
+  log(
+    chalk.white('  logs [container]   ') +
+      info('Show logs for a specific container')
+  )
 }
 
 const command = async function (container) {
   const envSlug = await envUtils.parseOrPromptEnv()
   if (envSlug === false) {
-    log(error('Error: Unable to determine which environment to show logs from. Please run this command from within your environment.'))
+    log(
+      error(
+        'Error: Unable to determine which environment to show logs from. Please run this command from within your environment.'
+      )
+    )
   } else {
     const envPath = await utils.envPath(envSlug)
 
@@ -37,7 +47,10 @@ const command = async function (container) {
     } catch (ex) {}
 
     try {
-      execSync(`docker-compose logs -f ${container}`, { stdio: 'inherit', cwd: envPath })
+      execSync(`docker-compose logs -f ${container}`, {
+        stdio: 'inherit',
+        cwd: envPath
+      })
     } catch (ex) {}
   }
 }

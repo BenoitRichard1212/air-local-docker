@@ -105,7 +105,7 @@ async function get (key) {
     await read()
   }
 
-  return (typeof config[key] === 'undefined') ? defaults[key] : config[key]
+  return typeof config[key] === 'undefined' ? defaults[key] : config[key]
 }
 
 async function set (key, value) {
@@ -130,7 +130,8 @@ async function prompt () {
     {
       name: 'sitesPath',
       type: 'input',
-      message: 'What directory would you like AIRLocal to create environments/sites within?',
+      message:
+        'What directory would you like AIRLocal to create environments/sites within?',
       default: currentDir || defaults.sitesPath,
       validate: helpers.validateNotEmpty,
       filter: resolveHome,
@@ -139,7 +140,8 @@ async function prompt () {
     {
       name: 'snapshotsPath',
       type: 'input',
-      message: 'What directory would you like to store AIRSnapshots data within?',
+      message:
+        'What directory would you like to store AIRSnapshots data within?',
       default: currentSnapshots || defaults.snapshotsPath,
       validate: helpers.validateNotEmpty,
       filter: resolveHome,
@@ -154,8 +156,10 @@ async function prompt () {
     {
       name: 'shareErrors',
       type: 'confirm',
-      message: 'Would you like to anonymously help us improve by sharing any errors with us automatically? (no identifiable information is collected)',
-      default: currentErrors !== undefined ? currentErrors : defaults.shareErrors
+      message:
+        'Would you like to anonymously help us improve by sharing any errors with us automatically? (no identifiable information is collected)',
+      default:
+        currentErrors !== undefined ? currentErrors : defaults.shareErrors
     }
   ]
 
@@ -168,7 +172,8 @@ async function promptUnconfigured () {
     {
       name: 'useDefaults',
       type: 'confirm',
-      message: 'AIRLocal is not configured. Would you like to configure using default settings?',
+      message:
+        'AIRLocal is not configured. Would you like to configure using default settings?',
       default: '',
       validate: helpers.validateNotEmpty
     }
@@ -196,9 +201,15 @@ async function configureDefaults () {
  * @return {string} New content for the config file
  */
 const createProxyConfig = (proxy, curConfig) => {
-  const proxyMarkup = 'location @production {' + '\r\n' +
-    '        resolver 8.8.8.8;' + '\r\n' +
-    '        proxy_pass ' + proxy + '/$uri;' + '\r\n' +
+  const proxyMarkup =
+    'location @production {' +
+    '\r\n' +
+    '        resolver 8.8.8.8;' +
+    '\r\n' +
+    '        proxy_pass ' +
+    proxy +
+    '/$uri;' +
+    '\r\n' +
     '    }'
 
   const proxyMapObj = {
@@ -215,4 +226,14 @@ const createProxyConfig = (proxy, curConfig) => {
   return curConfig.replace(curConfig, newConfig)
 }
 
-module.exports = { command, promptUnconfigured, configureDefaults, checkIfConfigured, get, set, getConfigDirectory, createProxyConfig, getDefaults }
+module.exports = {
+  command,
+  promptUnconfigured,
+  configureDefaults,
+  checkIfConfigured,
+  get,
+  set,
+  getConfigDirectory,
+  createProxyConfig,
+  getDefaults
+}
