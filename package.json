@@ -7,9 +7,9 @@
   "scripts": {
     "airlocal": "node ./index.js",
     "airlocal-hosts": "node ./hosts.js",
-    "test": "modern test",
-    "format": "modern format",
-    "lint": "modern lint",
+    "test": "./node_modules/.bin/ava --verbose",
+    "test:watch": "./node_modules/.bin/ava --verbose --watch",
+    "coverage": "./node_modules/.bin/nyc npm test",
     "precommit": "lint-staged"
   },
   "bin": {
@@ -42,6 +42,7 @@
     "write-yaml": "^1.0.0"
   },
   "devDependencies": {
+    "ava": "^2.4.0",
     "eslint": "^6.5.1",
     "eslint-config-standard": "^14.1.0",
     "eslint-plugin-import": "^2.18.2",
@@ -50,9 +51,23 @@
     "eslint-plugin-standard": "^4.0.1",
     "husky": "^3.0.8",
     "lint-staged": "^9.4.2",
-    "modern-node": "^2.5.1",
+    "nyc": "^14.1.1",
     "prettier-standard": "^15.0.1",
     "standard": "^14.3.1"
+  },
+  "ava": {
+    "files": [
+      "./tests/*.test.js",
+      "./tests/**/*.test.js"
+    ],
+    "sources": [
+      "./index.js",
+      "./hosts.js",
+      "./src/*.js",
+      "./src/**/*.js"
+    ],
+    "inherit": true,
+    "verbose": true
   },
   "husky": {
     "hooks": {
