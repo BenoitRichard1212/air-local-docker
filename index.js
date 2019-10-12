@@ -87,11 +87,6 @@ program
           // Start the auth configuration flow
           auth.configure()
         }
-      } else if (cmd === 'status') {
-        auth.checkAuth()
-      } else if (cmd === 'run') {
-        // Run subcommand
-        auth.runAuth()
       }
     }
   })

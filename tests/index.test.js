@@ -1,9 +1,7 @@
 const test = require('ava')
+const nixt = require('nixt')
+const packageJson = require('../package.json')
 
-test.beforeEach(t => {
-  t.context.data = ''
-})
-
-test('index commands', t => {
-  t.is(t.context.data, '')
+test('air-local-docker version', t => {
+  t.pass()
 })

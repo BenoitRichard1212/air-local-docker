@@ -3,8 +3,10 @@ const os = require('os')
 const fs = require('fs-extra')
 const path = require('path')
 const inquirer = require('inquirer')
+const has = require('lodash.has')
 const helpers = require('./util/helpers')
 const axios = require('axios')
+const logger = require('./util/logger')
 const log = console.log
 const info = chalk.keyword('cyan')
 
@@ -19,14 +21,6 @@ function help () {
   log()
   log(chalk.white('Commands:'))
   log(chalk.white('  configure          ') + info('Setup AIR authentication'))
-  log(
-    chalk.white('  status             ') +
-      info('Show AIR authentication status')
-  )
-  log(
-    chalk.white('  run                ') +
-      info('Run the AIR authentication flow')
-  )
 }
 
 const getAuthConfigDirectory = function () {
@@ -40,16 +34,6 @@ const getAuthConfigFilePath = function () {
 const checkIfAuthConfigured = async function () {
   const authConfigured = await fs.exists(getAuthConfigFilePath())
   return authConfigured
-}
-
-const checkIfConfigured = async function () {
-  const authConfigured = await checkIfAuthConfigured()
-
-  if (authConfigured === false) {
-    return false
-  }
-
-  return true
 }
 
 const write = async function () {
@@ -98,72 +82,12 @@ const getAuthDefaults = function () {
   }
 }
 
-const checkAuth = async function () {
-  if ((await checkIfConfigured()) === false) {
-    console.error(
-      chalk.red('Error: ') +
-        "Auth not configured. Please run 'airlocal auth config' before continuing."
-    )
-    console.log()
-    process.exit()
-  }
-
-  const token = await get('token')
-
-  const options = {
-    headers: { 'Private-Token': token }
-  }
-
-  axios
-    .get('https://devops.45air.co/api/v4/groups?min_access_level=30', options)
-    .then(function (response) {
-      console.log(response.data)
-    })
-    .catch(function (error) {
-      if (error.response) {
-        const errData = error.response.data
-        console.error(
-          chalk.red('Error: ') + chalk.yellow(errData.error_description)
-        )
-      } else {
-        console.error(chalk.red('Error: ') + chalk.yellow(error.message))
-      }
-    })
-  console.log()
-}
-
-const runAuth = async function () {
-  if ((await checkIfConfigured()) === false) {
-    console.error(
-      chalk.red('Error: ') +
-        "Auth not configured. Please run 'airlocal auth config' before continuing."
-    )
-    console.log()
-    process.exit()
-  }
-
-  console.log(chalk.yellow('Run auth is WIP'))
-  console.log()
-}
-
 const prompt = async function () {
-  const currentUser = await get('user')
-
   const questions = [
     {
       name: 'customer',
       type: 'confirm',
       message: 'Are you a 45AIR Cloud customer?'
-    },
-    {
-      name: 'user',
-      type: 'input',
-      message: 'Enter your devops.45air.co username:',
-      default: currentUser || '',
-      validate: helpers.validateNotEmpty,
-      when: function (answers) {
-        return answers.customer === true
-      }
     },
     {
       name: 'token',
@@ -186,12 +110,49 @@ const configure = async function () {
   const answers = await prompt()
 
   await set('customer', answers.customer)
+
   if (answers.customer === true) {
-    await set('user', answers.user)
-    await set('token', answers.token)
+    let response
+    const options = {
+      headers: { 'Private-Token': answers.token }
+    }
+
+    try {
+      response = await axios.get('https://devops.45air.co/api/v4/user', options)
+    } catch (err) {
+      console.log()
+      if (err.response) {
+        // Server responded with a non 2xx response
+        console.log(chalk.red('Error: ') + chalk.yellow(err.response.data.message))
+        console.log(chalk.yellow('Try another PAT with the proper scope!'))
+      } else if (err.request) {
+        // No response received from server
+        logger.log(err.request)
+        console.log(chalk.red('Error: No response from the server. Logging the error request and exiting.'))
+      } else {
+        // Something happened in setting up the request
+        logger.log(err)
+        console.log(chalk.red('Error: ') + err.message)
+      }
+      console.log()
+      process.exit()
+    }
+
+    if (has(response, 'data.username')) {
+      await set('user', response.data.username)
+      await set('token', answers.token)
+
+      console.log()
+      console.log(chalk.green('Authenticated as username ') + response.data.username)
+      console.log(chalk.green('AIRCloud Auth Configured'))
+      console.log()
+    }
+
+    process.exit()
   }
 
-  console.log(chalk.green('AIR Cloud Auth Configured!'))
+  console.log()
+  console.log(chalk.green('Sign up for 45AIR Cloud if you want to get the benefits customers have with AIRLocal'))
   console.log()
 }
 
@@ -201,7 +162,5 @@ module.exports = {
   checkIfAuthConfigured,
   get,
   set,
-  getAuthConfigDirectory,
-  checkAuth,
-  runAuth
+  getAuthConfigDirectory
 }

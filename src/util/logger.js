@@ -1,13 +1,6 @@
 const path = require('path')
 const { createLogger, format, transports } = require('winston')
-const { LoggingWinston } = require('@google-cloud/logging-winston')
-const { utilPath } = require('./variables')
 const utils = require('./utilities')
-
-const loggingWinston = new LoggingWinston({
-  projectId: 'air-local-docker',
-  keyFilename: path.join(utilPath, 'logger.json')
-})
 
 const logger = createLogger({
   level: 'info',
@@ -29,4 +22,4 @@ const logger = createLogger({
   ]
 })
 
-module.exports = { logger, loggingWinston }
+module.exports = { logger }
