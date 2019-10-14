@@ -11,8 +11,7 @@
     "test:watch": "./node_modules/.bin/ava --verbose --watch",
     "coverage": "./node_modules/.bin/nyc npm test",
     "format": ".node_modules/.bin/eslint --fix .",
-    "lint": ".node_modules/.bin/eslint .",
-    "precommit": "lint-staged"
+    "lint": ".node_modules/.bin/eslint ."
   },
   "bin": {
     "airlocal": "./index.js",
@@ -35,11 +34,13 @@
     "inquirer": "^7.0.0",
     "is-port-reachable": "^2.0.1",
     "lodash.has": "^4.5.2",
+    "log-process-errors": "^5.0.2",
     "mysql": "^2.17.1",
     "read-yaml": "^1.1.0",
     "sudo-prompt": "^9.0.0",
     "terminal-link": "^2.0.0",
     "update-check": "^1.5.3",
+    "update-notifier": "^3.0.1",
     "winston": "^3.2.1",
     "write-yaml": "^1.0.0"
   },
@@ -71,16 +72,5 @@
     ],
     "inherit": true,
     "verbose": true
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
-  "lint-staged": {
-    "**/*": [
-      "eslint --fix",
-      "git add"
-    ]
   }
 }

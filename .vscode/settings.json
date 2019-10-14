@@ -9,7 +9,6 @@
   "prettier.requireConfig": true,
   "eslint.autoFixOnSave": true,
   "eslint.run": "onType",
-  "eslint.nodePath": "./node_modules/.bin",
   "prettier.disableLanguages": ["javascript", "json", "yml", "yaml"],
   "cloudcode.yaml.format.enable": false,
   "yaml.format.enable": true,

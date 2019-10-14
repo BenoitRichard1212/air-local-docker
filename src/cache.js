@@ -6,7 +6,7 @@ const info = chalk.keyword('cyan')
 const warning = chalk.keyword('orange')
 
 function help () {
-  log(chalk.white('Usage: airlocal auth [command]'))
+  log(chalk.white('Usage: airlocal cache [command]'))
   log()
   log(chalk.white('Options:'))
   log(chalk.white('  -h, --help       output usage information'))
@@ -15,9 +15,6 @@ function help () {
   log(
     chalk.white('  clear            ') +
       info('Clears WP-CLI, NPM, and AIRSnapshots caches')
-  )
-  log(
-    chalk.white('  info             ') + info('Show AIR authentication status')
   )
 }
 
