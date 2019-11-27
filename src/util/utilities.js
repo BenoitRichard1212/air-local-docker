@@ -1,8 +1,11 @@
 const path = require('path')
 const os = require('os')
 const fs = require('fs-extra')
+const chalk = require('chalk')
+const log = console.log
 const execSync = require('child_process').execSync
 const slugify = require('@sindresorhus/slugify')
+const isPortReachable = require('is-port-reachable')
 const async = require('asyncro')
 const configure = require('../configure')
 
@@ -123,6 +126,23 @@ async function shareErrors () {
   return sharing
 }
 
+async function portsInUse () {
+  const dbPort = await isPortReachable(3306)
+  const mailhogPort = await isPortReachable(1025)
+  const mailhogPortExtra = await isPortReachable(1080)
+
+  if (dbPort || mailhogPort || mailhogPortExtra) {
+    log(
+      chalk.bold.yellow('Warning: ') +
+        chalk.yellow(
+          'You have ports in use already that will conflict with AIRLocal'
+        )
+    )
+    return true
+  }
+  return false
+}
+
 module.exports = {
   checkIfDockerRunning,
   envPath,
@@ -137,5 +157,6 @@ module.exports = {
   getConfigDirectory,
   resolveHome,
   async,
-  shareErrors
+  shareErrors,
+  portsInUse
 }

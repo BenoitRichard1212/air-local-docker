@@ -1,5 +1,4 @@
 const chalk = require('chalk')
-const isPortReachable = require('is-port-reachable')
 const log = console.log
 const info = chalk.keyword('cyan')
 const warning = chalk.keyword('orange')
@@ -147,20 +146,6 @@ const restartGateway = function () {
 const startGlobal = async function () {
   if (started === true) {
     return
-  }
-
-  const dbPort = await isPortReachable(3306)
-  const mailhogPort = await isPortReachable(1025)
-  const mailhogPortExtra = await isPortReachable(1080)
-
-  if (dbPort || mailhogPort || mailhogPortExtra) {
-    log(
-      chalk.bold.yellow('Warning: ') +
-        chalk.yellow(
-          'You have ports in use already that will conflict with AIRLocal'
-        )
-    )
-    process.exit(1)
   }
 
   ensureNetworkExists()
