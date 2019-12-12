@@ -433,7 +433,11 @@ const createEnv = async function () {
     dns: ['10.0.0.2'],
     environment: {
       VIRTUAL_PORT: 80,
-      WP_CLI_CACHE_DIR: '/var/www/.wp-cli/cache'
+      WP_CLI_CACHE_DIR: '/var/www/.wp-cli/cache',
+      DB_HOST: 'mysql',
+      DB_USER: 'wordpress',
+      DB_PASSWORD: 'password',
+      DB_NAME: `${envSlug}`
     }
   }
 
