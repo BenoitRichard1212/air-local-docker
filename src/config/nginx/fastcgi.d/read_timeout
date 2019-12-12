@@ -1,0 +1,2 @@
+# Long timeout to allow more time with Xdebug
+fastcgi_read_timeout 3600s;

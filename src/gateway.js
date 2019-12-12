@@ -114,7 +114,7 @@ const waitForDB = function () {
         clearInterval(interval)
         resolve()
       }
-    }, 1000)
+    }, 3000)
   })
 }
 

@@ -6,9 +6,13 @@ const inquirer = require('inquirer')
 const has = require('lodash.has')
 const helpers = require('./util/helpers')
 const axios = require('axios')
+
+const error = chalk.bold.red
+const warning = chalk.keyword('orange')
+const info = chalk.keyword('cyan')
+const success = chalk.keyword('green')
 const logger = require('./util/logger')
 const log = console.log
-const info = chalk.keyword('cyan')
 
 // Tracks current auth config
 let authConfig = null
@@ -20,7 +24,8 @@ function help () {
   log(chalk.white('  -h, --help         output usage information'))
   log()
   log(chalk.white('Commands:'))
-  log(chalk.white('  configure          ') + info('Setup AIR authentication'))
+  log(chalk.white('  configure/config   ') + info('Setup authentication'))
+  log(chalk.white('  status             ') + info('Check authentication status'))
 }
 
 const getAuthConfigDirectory = function () {
@@ -78,7 +83,8 @@ const getAuthDefaults = function () {
   return {
     customer: false,
     user: '',
-    token: ''
+    token: '',
+    group: ''
   }
 }
 
@@ -87,14 +93,24 @@ const prompt = async function () {
     {
       name: 'customer',
       type: 'confirm',
-      message: 'Are you a 45AIR Cloud customer?'
+      message: 'Do you have an AirCloud devops.45air.co account?'
     },
     {
       name: 'token',
-      type: 'password',
-      message: 'Enter your devops.45air.co PAT (Personal Access Token):',
+      type: 'input',
+      message: 'Enter your devops.45air.co Gitlab PAT (Personal Access Token):',
       default: '',
       validate: helpers.validateNotEmpty,
+      when: function (answers) {
+        return answers.customer === true
+      }
+    },
+    {
+      name: 'group',
+      type: 'number',
+      message: 'Enter your devops.45air.co Gitlab group ID',
+      default: '',
+      validate: helpers.validateNumber,
       when: function (answers) {
         return answers.customer === true
       }
@@ -102,7 +118,6 @@ const prompt = async function () {
   ]
 
   const answers = await inquirer.prompt(questions)
-
   return answers
 }
 
@@ -111,54 +126,98 @@ const configure = async function () {
 
   await set('customer', answers.customer)
 
-  if (answers.customer === true) {
-    let response
-    const options = {
-      headers: { 'Private-Token': answers.token }
-    }
-
-    try {
-      response = await axios.get('https://devops.45air.co/api/v4/user', options)
-    } catch (err) {
-      console.log()
-      if (err.response) {
-        // Server responded with a non 2xx response
-        console.log(chalk.red('Error: ') + chalk.yellow(err.response.data.message))
-        console.log(chalk.yellow('Try another PAT with the proper scope!'))
-      } else if (err.request) {
-        // No response received from server
-        logger.log(err.request)
-        console.log(chalk.red('Error: No response from the server. Logging the error request and exiting.'))
-      } else {
-        // Something happened in setting up the request
-        logger.log(err)
-        console.log(chalk.red('Error: ') + err.message)
-      }
-      console.log()
-      process.exit()
-    }
-
-    if (has(response, 'data.username')) {
-      await set('user', response.data.username)
-      await set('token', answers.token)
-
-      console.log()
-      console.log(chalk.green('Authenticated as username ') + response.data.username)
-      console.log(chalk.green('AIRCloud Auth Configured'))
-      console.log()
-    }
-
-    process.exit()
+  if (!answers.customer) {
+    log(warning('Sign up for 45AIR Cloud if you want to get the benefits customers have with AIRLocal'))
+    process.exit(0)
   }
 
-  console.log()
-  console.log(chalk.green('Sign up for 45AIR Cloud if you want to get the benefits customers have with AIRLocal'))
-  console.log()
+  let response
+  const options = {
+    headers: { 'Private-Token': answers.token }
+  }
+
+  try {
+    response = await axios.get('https://devops.45air.co/api/v4/user', options)
+  } catch (err) {
+    logger.log('error', err)
+
+    if (err.response) {
+      // Server responded with a non 2xx response
+      log(error(err.response.data.message))
+      log(error('Try another PAT with the proper scope'))
+      process.exit(1)
+    } else if (err.request) {
+      // No response received from server
+      log(error('No response from the server. Logging the error request and exiting'))
+      process.exit(1)
+    }
+
+    // Something happened in setting up the request
+    log(error(err.message))
+    process.exit(1)
+  }
+
+  if (has(response, 'data.username')) {
+    await set('user', response.data.username)
+    await set('token', answers.token)
+    await set('group', answers.group)
+
+    log(success('Authenticated as username ') + response.data.username)
+    log(success('AirCloud authentication configured'))
+    process.exit(0)
+  }
+}
+
+const status = async function () {
+  const configured = await checkIfAuthConfigured()
+
+  if (!configured) {
+    log(error('Authentication not configured'))
+    process.exit(0)
+  }
+
+  const user = await get('user')
+  const group = await get('group')
+  const token = await get('token')
+
+  let response
+  const options = {
+    headers: { 'Private-Token': token }
+  }
+
+  try {
+    response = await axios.get('https://devops.45air.co/api/v4/groups/' + group, options)
+  } catch (err) {
+    logger.log('error', err)
+
+    if (err.response) {
+      // Server responded with a non 2xx response
+      log(error(err.response.data.message))
+      process.exit(1)
+    } else if (err.request) {
+      // No response received from server
+      log(error('No response from the server. Logging the error request and exiting'))
+      process.exit(1)
+    }
+
+    // Something happened in setting up the request
+    log(error(err.message))
+    process.exit(1)
+  }
+
+  log(success('Authentication configured'))
+  log('Username: ' + info(user))
+  if (has(response, 'data.name')) {
+    log('Group: ' + info(response.data.name))
+  } else {
+    log('Group: ' + error('Invalid group ID'))
+  }
 }
 
 module.exports = {
   help,
   configure,
+  status,
   checkIfAuthConfigured,
   get,
   set,

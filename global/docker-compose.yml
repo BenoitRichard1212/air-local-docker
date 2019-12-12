@@ -13,18 +13,18 @@ services:
         ipv4_address: 10.0.0.2
 
   gateway:
-    image: 45air/nginx-proxy
+    image: jwilder/nginx-proxy
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - "/var/run/docker.sock:/tmp/docker.sock:ro"
+      - "//var/run/docker.sock:/tmp/docker.sock:ro"
     networks:
       airlocaldocker:
         ipv4_address: 10.0.0.3
 
   mysql:
-    image: mysql:5
+    image: mysql:5.7
     volumes:
       - "mysqlData:/var/lib/mysql"
     ports:
@@ -57,19 +57,6 @@ services:
     networks:
       - airlocaldocker
 
-  portainer:
-    image: portainer/portainer
-    command: -H unix:///var/run/docker.sock
-    restart: always
-    ports:
-      - 9000:9000
-      - 8000:8000
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - portainerData:/data
-    networks:
-      - airlocaldocker
-
 networks:
   airlocaldocker:
     external:
@@ -77,4 +64,3 @@ networks:
 
 volumes:
   mysqlData:
-  portainerData:

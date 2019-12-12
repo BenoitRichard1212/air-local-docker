@@ -2,7 +2,7 @@ const chalk = require('chalk')
 const execSync = require('child_process').execSync
 const gateway = require('./gateway')
 const environment = require('./environment')
-const envUtils = require('./util/env')
+const envUtils = require('./util/utilities')
 const utils = require('./util/utilities')
 const log = console.log
 const error = chalk.bold.red
@@ -42,7 +42,7 @@ const command = async function (wpCmd) {
     // Run the command
     try {
       execSync(
-        `docker-compose exec ${ttyFlag} --user www-data phpfpm wp ${wpCmd}`,
+        `docker-compose exec ${ttyFlag} phpfpm wp ${wpCmd}`,
         { stdio: 'inherit', cwd: envPath }
       )
     } catch (ex) {}
