@@ -1,16 +1,14 @@
 const path = require('path')
 const os = require('os')
 const fs = require('fs-extra')
-const chalk = require('chalk')
-const log = console.log
 const execSync = require('child_process').execSync
 const slugify = require('@sindresorhus/slugify')
-const isPortReachable = require('is-port-reachable')
 const async = require('asyncro')
-const configure = require('../configure')
-
-// Tracks current config
-let config = null
+const inquirer = require('inquirer')
+const chalk = require('chalk')
+const helper = require('./helpers')
+const log = console.log
+const error = chalk.bold.red
 
 /**
  * Resolve the path to users home directory
@@ -36,7 +34,7 @@ function getConfigDirectory () {
  *
  * @returns {string}
  */
-function getConfigFilePath () {
+async function getConfigFilePath () {
   return path.join(getConfigDirectory(), 'config.json')
 }
 
@@ -45,11 +43,12 @@ function getConfigFilePath () {
  *
  * @returns {string}
  */
-function configFileExists () {
+async function configFileExists () {
   return path.join(getConfigDirectory(), 'config.json')
 }
 
 async function write () {
+  const config = await read()
   // Make sure we have our config directory present
   await fs.ensureDir(getConfigDirectory())
   await fs.writeJson(getConfigFilePath(), config)
@@ -58,27 +57,24 @@ async function write () {
 async function read () {
   let readConfig = {}
 
-  if (await fs.exists(getConfigFilePath())) {
-    readConfig = await fs.readJson(getConfigFilePath())
+  const confPath = await getConfigFilePath()
+  if (await fs.exists(confPath)) {
+    readConfig = await fs.readJson(confPath)
   }
 
-  config = Object.assign({}, readConfig)
+  const config = Object.assign({}, readConfig)
+
+  return config
 }
 
 async function get (key) {
-  const defaults = configure.getDefaults()
+  const config = await read()
 
-  if (config === null) {
-    await read()
-  }
-
-  return typeof config[key] === 'undefined' ? defaults[key] : config[key]
+  return typeof config[key] === 'undefined' ? '' : config[key]
 }
 
 async function set (key, value) {
-  if (config === null) {
-    await read()
-  }
+  const config = await read()
 
   config[key] = value
 
@@ -105,7 +101,7 @@ function checkIfDockerRunning () {
 
   try {
     output = execSync('docker system info')
-  } catch (er) {
+  } catch (err) {
     return false
   }
 
@@ -121,26 +117,154 @@ function checkIfDockerRunning () {
   return true
 }
 
-async function shareErrors () {
-  const sharing = await configure.get('shareErrors')
-  return sharing
+/**
+ * Run tasks required when updating airlocal versions
+ *
+ * @param {string} existing Last configured version.
+ * @param {string} current  Current version.
+ * @returns {boolean}
+ */
+async function runUpdateTasks (existing, current) {
+  execSync('airlocal image update all', { stdio: 'inherit' })
+  execSync('airlocal cache clear', { stdio: 'inherit' })
+  execSync('airlocal stop all', { stdio: 'inherit' })
 }
 
-async function portsInUse () {
-  const dbPort = await isPortReachable(3306)
-  const mailhogPort = await isPortReachable(1025)
-  const mailhogPortExtra = await isPortReachable(1080)
+const parseEnvFromCWD = async function () {
+  // Compare both of these as all lowercase to account for any misconfigurations
+  let cwd = process.cwd().toLowerCase()
+  let sitesPathValue = await sitesPath()
+  sitesPathValue = sitesPathValue.toLowerCase()
 
-  if (dbPort || mailhogPort || mailhogPortExtra) {
-    log(
-      chalk.bold.yellow('Warning: ') +
-        chalk.yellow(
-          'You have ports in use already that will conflict with AIRLocal'
-        )
-    )
-    return true
+  if (cwd.indexOf(sitesPathValue) === -1) {
+    return false
   }
-  return false
+
+  if (cwd === sitesPathValue) {
+    return false
+  }
+
+  // Strip the base sitepath from the path
+  cwd = cwd.replace(sitesPathValue, '').replace(/^\//i, '')
+
+  // First segment is now the envSlug, get rid of the rest
+  cwd = cwd.split('/')[0]
+
+  // Make sure that a .config.json file exists here
+  const configFile = path.join(sitesPathValue, cwd, '.config.json')
+  if (!(await fs.exists(configFile))) {
+    return false
+  }
+
+  return cwd
+}
+
+const getAllEnvironments = async function () {
+  const sitePath = await get('sitesPath')
+  let dirContent = await fs.readdir(sitePath)
+
+  // Make into full path
+  dirContent = await async.map(dirContent, async item => {
+    return path.join(sitePath, item)
+  })
+
+  // Filter any that aren't directories
+  dirContent = await async.filter(dirContent, async item => {
+    const stat = await fs.stat(item)
+    return stat.isDirectory()
+  })
+
+  // Filter any that don't have the .config.json file (which indicates its probably not a AIRLocal Environment)
+  dirContent = await async.filter(dirContent, async item => {
+    const configFile = path.join(item, '.config.json')
+
+    const config = await fs.exists(configFile)
+    return config
+  })
+
+  // Back to just the basename
+  dirContent = await async.map(dirContent, async item => {
+    return path.basename(item)
+  })
+
+  return dirContent
+}
+
+const promptEnv = async function () {
+  const environments = await getAllEnvironments()
+
+  const questions = [
+    {
+      name: 'envSlug',
+      type: 'list',
+      message: 'What environment would you like to use?',
+      choices: environments
+    }
+  ]
+
+  log(
+    chalk.bold.white('Unable to determine environment from current directory')
+  )
+  const answers = await inquirer.prompt(questions)
+
+  return answers.envSlug
+}
+
+const parseOrPromptEnv = async function () {
+  let envSlug = await parseEnvFromCWD()
+
+  if (envSlug === false) {
+    envSlug = await promptEnv()
+  }
+
+  return envSlug
+}
+
+const getEnvHosts = async function (envPath) {
+  try {
+    const envConfig = await fs.readJson(path.join(envPath, '.config.json'))
+
+    return typeof envConfig === 'object' && undefined !== envConfig.envHosts
+      ? envConfig.envHosts
+      : []
+  } catch (ex) {
+    return []
+  }
+}
+
+const getPathOrError = async function (env) {
+  if (env === false || undefined === env || env.trim().length === 0) {
+    env = await promptEnv()
+  }
+
+  log(chalk.bold.white(`Locating project files for ${env}`))
+
+  const _envPath = await envPath(env)
+  if (!(await fs.pathExists(_envPath))) {
+    log(error(`ERROR: Cannot find ${env} environment!`))
+    process.exit(1)
+  }
+
+  return _envPath
+}
+
+/**
+ * Format the default Proxy URL based on entered hostname
+ *
+ * @param  {string} value The user entered hostname
+ * @return {string} The formatted default proxy URL
+ */
+const createDefaultProxy = function (value) {
+  let proxyUrl = 'http://' + helper.removeEndSlashes(value)
+  const proxyUrlTLD = proxyUrl.lastIndexOf('.')
+
+  if (proxyUrlTLD === -1) {
+    proxyUrl = proxyUrl + '.com'
+  } else {
+    proxyUrl = proxyUrl.substring(0, proxyUrlTLD + 1) + 'com'
+  }
+
+  return proxyUrl
 }
 
 module.exports = {
@@ -157,6 +281,12 @@ module.exports = {
   getConfigDirectory,
   resolveHome,
   async,
-  shareErrors,
-  portsInUse
+  runUpdateTasks,
+  parseEnvFromCWD,
+  getAllEnvironments,
+  promptEnv,
+  parseOrPromptEnv,
+  getEnvHosts,
+  getPathOrError,
+  createDefaultProxy
 }

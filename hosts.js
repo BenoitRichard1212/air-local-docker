@@ -2,7 +2,11 @@
 
 const commander = require('commander')
 const hostile = require('hostile')
-
+const chalk = require('chalk')
+const error = chalk.bold.red
+const info = chalk.keyword('cyan')
+const success = chalk.keyword('green')
+const logger = require('./src/util/logger')
 const log = console.log
 
 // Init the CLI
@@ -11,9 +15,11 @@ const program = new commander.Command()
 program.command('add <host>').action(function (host) {
   hostile.set('127.0.0.1', host, function (err) {
     if (err) {
-      console.error(err)
+      logger.log('err', err)
+      log(error(err.message))
+      process.exit(1)
     } else {
-      log('Added to hosts file successfully!')
+      log(success('Added to hosts file successfully!'))
     }
   })
 })
@@ -21,10 +27,28 @@ program.command('add <host>').action(function (host) {
 program.command('remove <host>').action(function (host) {
   hostile.remove('127.0.0.1', host, function (err) {
     if (err) {
-      console.error(err)
+      logger.log('err', err)
+      log(error(err.message))
+      process.exit(1)
     } else {
-      log('Removed from hosts file successfully!')
+      log(success('Removed from hosts file successfully!'))
     }
+  })
+})
+
+program.command('list').action(function () {
+  const preserveFormatting = false
+
+  hostile.get(preserveFormatting, function (err, lines) {
+    if (err) {
+      logger.log('err', err)
+      log(error(err.message))
+      process.exit(1)
+    }
+
+    lines.forEach(function (line) {
+      log(info(line))
+    })
   })
 })
 

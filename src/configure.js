@@ -4,8 +4,15 @@ const fs = require('fs-extra')
 const path = require('path')
 const inquirer = require('inquirer')
 const helpers = require('./util/helpers')
-const log = console.log
+const utils = require('./util/utilities')
+const pkg = require('../package.json')
+
 const error = chalk.bold.red
+const warning = chalk.keyword('orange')
+const info = chalk.keyword('cyan')
+const success = chalk.keyword('green')
+const logger = require('./util/logger')
+const log = console.log
 
 // Tracks current config
 let config = null
@@ -16,14 +23,15 @@ async function command () {
 }
 
 async function configure (configuration) {
-  const sitesPath = path.resolve(configuration.sitesPath)
-  const snapshotsPath = path.resolve(configuration.snapshotsPath)
+  const sitesPath = await path.resolve(configuration.sitesPath)
+  const snapshotsPath = await path.resolve(configuration.snapshotsPath)
 
   // Attempt to create the sites directory
   try {
     await fs.ensureDir(sitesPath)
-  } catch (ex) {
-    error('Error: Could not create directory for environments!')
+  } catch (err) {
+    logger.log('error', err)
+    log(error('Could not create sites directory'))
     process.exit(1)
   }
 
@@ -32,8 +40,9 @@ async function configure (configuration) {
     const testfile = path.join(sitesPath, 'testfile')
     await fs.ensureFile(testfile)
     await fs.remove(testfile)
-  } catch (ex) {
-    error('Error: The environment directory is not writable')
+  } catch (err) {
+    logger.log('error', err)
+    log(error('The environment directory is not writable'))
     process.exit(1)
   }
 
@@ -42,8 +51,9 @@ async function configure (configuration) {
     const testfile = path.join(snapshotsPath, 'testfile')
     await fs.ensureFile(testfile)
     await fs.remove(testfile)
-  } catch (ex) {
-    error('Error: The snapshots directory is not writable')
+  } catch (err) {
+    logger.log('error', err)
+    log(error('The snapshots directory is not writable'))
     process.exit(1)
   }
 
@@ -51,17 +61,23 @@ async function configure (configuration) {
   await set('snapshotsPath', snapshotsPath)
   await set('manageHosts', configuration.manageHosts)
   await set('shareErrors', configuration.shareErrors)
+  await set('version', pkg.version)
 
-  log(chalk.green('Successfully Configured AIRLocal'))
-  log()
+  log(success('Successfully Configured'))
+  log('   Sites Path: ' + info(sitesPath))
+  log('   Snapshots Path: ' + info(snapshotsPath))
+  log('   Manage Hosts: ' + info(configuration.manageHosts))
+  log('   Share Errors: ' + info(configuration.shareErrors))
+  log('   Version: ' + info(pkg.version))
 }
 
-function getDefaults () {
+async function getDefaults () {
   return {
     sitesPath: path.join(os.homedir(), 'air-local-docker-sites'),
     snapshotsPath: path.join(os.homedir(), '.airsnapshots'),
     manageHosts: true,
-    shareErrors: true
+    shareErrors: true,
+    version: pkg.version
   }
 }
 
@@ -125,6 +141,13 @@ async function prompt () {
   const currentHosts = await get('manageHosts')
   const currentSnapshots = await get('snapshotsPath')
   const currentErrors = await get('shareErrors')
+  const existingVer = await get('version')
+
+  if (!existingVer) {
+    log(warning('You are updating from a pre 1.x.x version of AirLocal, we need to run some update tasks on your environment...'))
+    await set('version', pkg.version)
+    await utils.runUpdateTasks(existingVer, pkg.version)
+  }
 
   const questions = [
     {
@@ -193,39 +216,6 @@ async function configureDefaults () {
   await configure(defaults)
 }
 
-/**
- * Create the NGINX directive to set a media URL proxy
- *
- * @param {string} proxy The URL to set the proxy to
- * @param {string} curConfig Complete content of the existing config file
- * @return {string} New content for the config file
- */
-const createProxyConfig = (proxy, curConfig) => {
-  const proxyMarkup =
-    'location @production {' +
-    '\r\n' +
-    '        resolver 8.8.8.8;' +
-    '\r\n' +
-    '        proxy_pass ' +
-    proxy +
-    '/$uri;' +
-    '\r\n' +
-    '    }'
-
-  const proxyMapObj = {
-    '#{TRY_PROXY}': 'try_files $uri @production;',
-    '#{PROXY_URL}': proxyMarkup
-  }
-
-  const re = new RegExp(Object.keys(proxyMapObj).join('|'), 'gi')
-
-  const newConfig = curConfig.replace(re, function (matched) {
-    return proxyMapObj[matched]
-  })
-
-  return curConfig.replace(curConfig, newConfig)
-}
-
 module.exports = {
   command,
   promptUnconfigured,
@@ -234,6 +224,5 @@ module.exports = {
   get,
   set,
   getConfigDirectory,
-  createProxyConfig,
   getDefaults
 }

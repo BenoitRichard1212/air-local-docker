@@ -9,11 +9,17 @@ const config = require('./configure')
 const chalk = require('chalk')
 const readYaml = require('read-yaml')
 const writeYaml = require('write-yaml')
-const envUtil = require('./util/env')
+const envUtil = require('./util/utilities')
 const utils = require('./util/utilities')
 const helpers = require('./util/helpers')
-const log = console.log
+const { rootPath } = require('./util/variables')
+
+const error = chalk.bold.red
+const warning = chalk.keyword('orange')
 const info = chalk.keyword('cyan')
+const success = chalk.keyword('green')
+const logger = require('./util/logger')
+const log = console.log
 
 function startHelp () {
   log(chalk.white('Command: airlocal start'))
@@ -101,177 +107,198 @@ function restartHelp () {
 
 const start = async function (env) {
   if (env === 'all') {
-    startAll()
-  } else {
-    if (undefined === env || env.trim().length === 0) {
-      env = await envUtil.parseEnvFromCWD()
+    await startAll()
+    process.exit(0)
+  }
+
+  if (undefined === env || env.trim().length === 0) {
+    env = await envUtil.parseOrPromptEnv()
+  }
+
+  // Need to call this outside of envUtils.getPathOrError since we need the slug itself for some functions
+  if (env === false || undefined === env || env.trim().length === 0) {
+    env = await envUtil.promptEnv()
+  }
+
+  const envPath = await envUtil.getPathOrError(env)
+
+  // If we got the path from the cwd, we don't have a slug yet, so get it
+  const envSlug = utils.envSlug(env)
+
+  await gateway.startGlobal()
+
+  log(info(`Starting docker containers for ${envSlug}`))
+  try {
+    execSync('docker-compose up -d', { stdio: 'inherit', cwd: envPath })
+  } catch (err) {
+    logger.log('error', err)
+  }
+
+  const envHosts = await envUtil.getEnvHosts(envPath)
+  if (envHosts.length > 0) {
+    log(info('Environment configured for the following domains:'))
+    for (let i = 0, len = envHosts.length; i < len; i++) {
+      log(envHosts[i])
     }
-
-    // Need to call this outside of envUtils.getPathOrError since we need the slug itself for some functions
-    if (env === false || undefined === env || env.trim().length === 0) {
-      env = await envUtil.promptEnv()
-    }
-
-    const envPath = await envUtil.getPathOrError(env)
-
-    // If we got the path from the cwd, we don't have a slug yet, so get it
-    const envSlug = utils.envSlug(env)
-
-    await gateway.startGlobal()
-
-    console.log(`Starting docker containers for ${envSlug}`)
-    try {
-      execSync('docker-compose up -d', { stdio: 'inherit', cwd: envPath })
-    } catch (ex) {}
-
-    const envHosts = await envUtil.getEnvHosts(envPath)
-    if (envHosts.length > 0) {
-      console.log()
-      console.log('Environment configured for the following domains:')
-      for (let i = 0, len = envHosts.length; i < len; i++) {
-        console.log(envHosts[i])
-      }
-    }
-
-    console.log()
   }
 }
 
 const stop = async function (env) {
   if (env === 'all') {
-    stopAll()
-  } else {
-    if (undefined === env || env.trim().length === 0) {
-      env = await envUtil.parseEnvFromCWD()
-    }
+    await stopAll()
+    process.exit(0)
+  }
 
-    // Need to call this outside of envUtils.getPathOrError since we need the slug itself for some functions
-    if (env === false || undefined === env || env.trim().length === 0) {
-      env = await envUtil.promptEnv()
-    }
+  if (undefined === env || env.trim().length === 0) {
+    env = await envUtil.parseEnvFromCWD()
+  }
 
-    const envPath = await envUtil.getPathOrError(env)
+  // Need to call this outside of envUtils.getPathOrError since we need the slug itself for some functions
+  if (env === false || undefined === env || env.trim().length === 0) {
+    env = await envUtil.promptEnv()
+  }
 
-    // If we got the path from the cwd, we don't have a slug yet, so get it
-    const envSlug = utils.envSlug(env)
+  const envPath = await envUtil.getPathOrError(env)
 
-    console.log(`Stopping docker containers for ${envSlug}`)
-    try {
-      execSync('docker-compose down', { stdio: 'inherit', cwd: envPath })
-    } catch (ex) {}
-    console.log()
+  // If we got the path from the cwd, we don't have a slug yet, so get it
+  const envSlug = utils.envSlug(env)
+
+  log(success(`Stopping docker containers for ${envSlug}`))
+  try {
+    execSync('docker-compose down', { stdio: 'inherit', cwd: envPath })
+  } catch (err) {
+    logger.log('error', err)
   }
 }
 
 const restart = async function (env) {
   if (env === 'all') {
-    restartAll()
-  } else {
-    if (undefined === env || env.trim().length === 0) {
-      env = await envUtil.parseEnvFromCWD()
-    }
+    await restartAll()
+    process.exit(0)
+  }
 
-    // Need to call this outside of envUtils.getPathOrError since we need the slug itself for some functions
-    if (env === false || undefined === env || env.trim().length === 0) {
-      env = await envUtil.promptEnv()
-    }
+  if (undefined === env || env.trim().length === 0) {
+    env = await envUtil.parseEnvFromCWD()
+  }
 
-    const envPath = await envUtil.getPathOrError(env)
+  // Need to call this outside of envUtils.getPathOrError since we need the slug itself for some functions
+  if (env === false || undefined === env || env.trim().length === 0) {
+    env = await envUtil.promptEnv()
+  }
 
-    // If we got the path from the cwd, we don't have a slug yet, so get it
-    const envSlug = utils.envSlug(env)
+  const envPath = await envUtil.getPathOrError(env)
 
-    await gateway.startGlobal()
+  // If we got the path from the cwd, we don't have a slug yet, so get it
+  const envSlug = utils.envSlug(env)
 
-    console.log(`Restarting docker containers for ${envSlug}`)
-    try {
-      execSync('docker-compose restart', { stdio: 'inherit', cwd: envPath })
-    } catch (ex) {
-      // Usually because the environment isn't running
-    }
-    console.log()
+  await gateway.startGlobal()
+
+  log(success(`Restarting docker containers for ${envSlug}`))
+  try {
+    execSync('docker-compose restart', { stdio: 'inherit', cwd: envPath })
+  } catch (err) {
+    logger.log('error', err)
+    process.exit(1)
   }
 }
 
 const deleteEnv = async function (env) {
   if (env === 'all') {
-    deleteAll()
-  } else {
-    // Need to call this outside of envUtils.getPathOrError since we need the slug itself for some functions
-    if (env === false || undefined === env || env.trim().length === 0) {
-      env = await envUtil.promptEnv()
-    }
+    await deleteAll()
+    process.exit(0)
+  }
 
-    const envPath = await envUtil.getPathOrError(env)
-    const envSlug = utils.envSlug(env)
+  // Need to call this outside of envUtils.getPathOrError since we need the slug itself for some functions
+  if (env === false || undefined === env || env.trim().length === 0) {
+    env = await envUtil.promptEnv()
+  }
 
-    const answers = await inquirer.prompt({
-      name: 'confirm',
-      type: 'confirm',
-      message: `Are you sure you want to delete the ${envSlug} environment`,
-      validate: helpers.validateNotEmpty,
-      default: false
-    })
+  const envPath = await envUtil.getPathOrError(env)
+  const envSlug = utils.envSlug(env)
 
-    if (answers.confirm === false) {
-      return
-    }
+  const answers = await inquirer.prompt({
+    name: 'confirm',
+    type: 'confirm',
+    message: `Are you sure you want to delete the ${envSlug} environment`,
+    validate: helpers.validateNotEmpty,
+    default: false
+  })
 
-    await gateway.stopGlobal()
-    await gateway.startGlobal()
+  if (answers.confirm === false) {
+    return
+  }
 
-    // Stop the environment, and ensure volumes are deleted with it
-    console.log('Deleting containers')
+  await gateway.stopGlobal()
+  await gateway.startGlobal()
+
+  // Stop the environment, and ensure volumes are deleted with it
+  log(info('Deleting containers'))
+  try {
+    execSync('docker-compose down -v', { stdio: 'inherit', cwd: envPath })
+  } catch (err) {
+    // If the docker-compose file is already gone, this happens
+    logger.log('error', err)
+  }
+
+  if ((await config.get('manageHosts')) === true) {
     try {
-      execSync('docker-compose down -v', { stdio: 'inherit', cwd: envPath })
-    } catch (ex) {
-      // If the docker-compose file is already gone, this happens
-    }
+      log(info('Removing host file entries'))
 
-    if ((await config.get('manageHosts')) === true) {
-      try {
-        console.log('Removing host file entries')
-
-        const sudoOptions = {
-          name: 'AIRLocal'
-        }
-
-        const envHosts = await envUtil.getEnvHosts(envPath)
-        for (let i = 0, len = envHosts.length; i < len; i++) {
-          await new Promise(resolve => {
-            console.log(` - Removing ${envHosts}`)
-            sudo.exec(
-              `airlocal-hosts remove ${envHosts}`,
-              sudoOptions,
-              function (error, stdout, stderr) {
-                if (error) {
-                  console.error(
-                    chalk.bold.yellow('Warning: ') +
-                      'Something went wrong deleting host file entries. There may still be remnants in /etc/hosts'
-                  )
-                  resolve()
-                  return
-                }
-                console.log(stdout)
-                resolve()
-              }
-            )
-          })
-        }
-      } catch (err) {
-        // Unfound config, etc
-        console.error(
-          chalk.bold.yellow('Warning: ') +
-            'Something went wrong deleting host file entries. There may still be remnants in /etc/hosts'
-        )
+      const sudoOptions = {
+        name: 'AIRLOCAL'
       }
+
+      const envHosts = await envUtil.getEnvHosts(envPath)
+      for (let i = 0, len = envHosts.length; i < len; i++) {
+        await new Promise(resolve => {
+          log(` - Removing ${envHosts}`)
+          const hostsCmd = path.join(rootPath, 'hosts.js')
+          sudo.exec(
+            hostsCmd + ` remove ${envHosts}`,
+            sudoOptions,
+            function (error, stdout, stderr) {
+              if (error) {
+                log(error('Something went wrong deleting host file entries. There may still be remnants in /etc/hosts'))
+                resolve()
+                return
+              }
+              log(success(stdout))
+              resolve()
+            }
+          )
+        })
+      }
+    } catch (err) {
+      // Unfound config, etc
+      log(error('Something went wrong deleting host file entries. There may still be remnants in /etc/hosts'))
+    }
+  }
+
+  log(info('Deleting Files'))
+  try {
+    await fs.remove(envPath)
+  } catch (err) {
+    // Most likely we got a permissions error here
+    logger.log('error', err)
+    log(error('Error deleting some of the site files, trying with elevated permissions'))
+
+    const options = {
+      name: 'AIRLOCAL'
     }
 
-    console.log('Deleting Files')
-    await fs.remove(envPath)
+    sudo.exec('rm -rf ' + envPath, options, function (error, stdout, stderr) {
+      if (error) {
+        log(error('You will need to manually delete the folder'))
+      }
+    })
+  }
 
-    console.log('Deleting Database')
+  log(info('Deleting Database'))
+  try {
     await database.deleteDatabase(envSlug)
+  } catch (err) {
+    logger.log('error', err)
+    log(error('Error deleting the database'))
   }
 }
 
@@ -317,9 +344,10 @@ const upgradeEnv = async function (env) {
       { lineWidth: 500 },
       function (err) {
         if (err) {
-          console.log(err)
+          logger.log('error', err)
+          log(error(err))
         }
-        console.log(`Finished updating ${envSlug}`)
+        log(success(`Finished updating ${envSlug}`))
         resolve()
       }
     )

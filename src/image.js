@@ -5,21 +5,17 @@ const info = chalk.keyword('cyan')
 
 // These have to exist, so we don't bother checking if they exist on the system first
 const globalImages = [
-  '45air/nginx-proxy:latest',
+  'jwilder/nginx-proxy',
   'mysql:5.7',
   'schickling/mailcatcher'
 ]
 const images = [
-  '45air/phpfpm:latest',
-  '45air/phpfpm:7.3',
+  'gcr.io/air-cloud-public/wordpress:latest',
+  'gcr.io/air-cloud-public/wordpress:7.3-nginx-fpm-dev',
   '45air/phpfpm:7.2',
   '45air/phpfpm:7.1',
   '45air/phpfpm:7.0',
-  '45air/phpfpm:5.6',
-  '45air/wpsnapshots:dev',
-  'redis:latest',
-  '45air/nginx:latest',
-  'docker.elastic.co/elasticsearch/elasticsearch:5.6.5'
+  'redis'
 ]
 
 function help () {

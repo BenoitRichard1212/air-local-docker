@@ -36,6 +36,20 @@ function validateNotEmpty (value) {
 }
 
 /**
+ * Check if required field is a number
+ *
+ * @param {*} value
+ * @returns {string|boolean}
+ */
+function validateNumber (value) {
+  if (typeof value !== 'number') {
+    return 'You need to provide a number'
+  }
+
+  return true
+}
+
+/**
  * Logic for validating yes or no questions
  *
  * @param {*} value
@@ -98,6 +112,7 @@ module.exports = {
   parseProxyUrl,
   parseHostname,
   validateBool,
+  validateNumber,
   validateNotEmpty,
   removeEndSlashes,
   unleadingslashit,

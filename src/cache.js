@@ -1,9 +1,10 @@
 const chalk = require('chalk')
 const gateway = require('./gateway')
 const execSync = require('child_process').execSync
-const log = console.log
+
 const info = chalk.keyword('cyan')
-const warning = chalk.keyword('orange')
+const success = chalk.keyword('green')
+const log = console.log
 
 function help () {
   log(chalk.white('Usage: airlocal cache [command]'))
@@ -22,7 +23,7 @@ const clear = async function () {
   await gateway.removeCacheVolume()
   await gateway.ensureCacheExists()
 
-  log(warning('Cache Cleared'))
+  log(success('Cache Cleared'))
 }
 
 const printInfo = async function () {
