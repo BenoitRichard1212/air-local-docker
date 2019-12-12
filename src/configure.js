@@ -72,13 +72,18 @@ async function configure (configuration) {
 }
 
 async function getDefaults () {
-  return {
-    sitesPath: path.join(os.homedir(), 'air-local-docker-sites'),
-    snapshotsPath: path.join(os.homedir(), '.airsnapshots'),
+  const sitesDir = await path.join(os.homedir(), 'air-local-docker-sites')
+  const ssDir = await path.join(os.homedir(), '.airsnapshots')
+
+  const defaults = {
+    sitesPath: sitesDir,
+    snapshotsPath: ssDir,
     manageHosts: true,
     shareErrors: true,
     version: pkg.version
   }
+
+  return defaults
 }
 
 function getConfigDirectory () {
@@ -115,7 +120,7 @@ async function read () {
 }
 
 async function get (key) {
-  const defaults = getDefaults()
+  const defaults = await getDefaults()
 
   if (config === null) {
     await read()
@@ -135,7 +140,7 @@ async function set (key, value) {
 }
 
 async function prompt () {
-  const defaults = getDefaults()
+  const defaults = await getDefaults()
 
   const currentDir = await get('sitesPath')
   const currentHosts = await get('manageHosts')
@@ -212,7 +217,7 @@ async function promptUnconfigured () {
 }
 
 async function configureDefaults () {
-  const defaults = getDefaults()
+  const defaults = await getDefaults()
   await configure(defaults)
 }
 
