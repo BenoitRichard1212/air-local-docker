@@ -677,13 +677,10 @@ const createEnv = async function () {
 
       await environment.start(envSlug)
 
-      execSync(
-        `docker-compose exec ${ttyFlag}phpfpm wp db create --dbname=$DB_NAME`,
-        {
-          stdio: 'inherit',
-          cwd: envPath
-        }
-      )
+      execSync(`docker-compose exec ${ttyFlag}phpfpm wp db create`, {
+        stdio: 'inherit',
+        cwd: envPath
+      })
     }
   }
 
