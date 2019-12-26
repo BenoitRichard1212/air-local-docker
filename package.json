@@ -1,6 +1,6 @@
 {
   "name": "@45air/air-local-docker",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Local docker development environment setup and provisioning CLI",
   "license": "MIT",
   "author": "Reilly <r.lowery@45press.com>",
