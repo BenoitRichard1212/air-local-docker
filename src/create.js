@@ -565,6 +565,8 @@ const createEnv = async function () {
       )
     } catch (err) {
       logger.log('error', err)
+      log(error('Error cloning repo from Gitlab'))
+      process.exit(1)
     }
 
     if (!fs.existsSync(envPath + '/' + repoSlug)) {
@@ -582,9 +584,9 @@ const createEnv = async function () {
         const file = path.join(envPath, repoSlug, 'auth.json')
         await fs.outputJsonSync(file, authJson)
       } catch (err) {
-        log(err)
         logger.log('error', err)
         log(error('Could not create auth.json file'))
+        process.exit(1)
       }
 
       try {
@@ -594,6 +596,8 @@ const createEnv = async function () {
         })
       } catch (err) {
         logger.log('error', err)
+        log(error('Error running composer install on the cloned repo'))
+        process.exit(1)
       }
 
       baseConfig.services.phpfpm = {
