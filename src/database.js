@@ -1,6 +1,6 @@
 const mysql = require('mysql')
 
-const getConnection = function () {
+const getConnection = async function () {
   const connection = mysql.createConnection({
     host: '127.0.0.1',
     user: 'root',
@@ -11,7 +11,7 @@ const getConnection = function () {
 }
 
 const create = async function (dbname) {
-  const connection = getConnection()
+  const connection = await getConnection()
 
   await new Promise((resolve, reject) => {
     connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbname}\`;`, function (

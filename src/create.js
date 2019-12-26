@@ -418,71 +418,10 @@ const createEnv = async function () {
 
   const ssDir = await snapshots.getSnapshotsDir()
 
-  baseConfig.services.phpfpm = {
-    build: {
-      context: './config/build',
-      dockerfile: `Dockerfile-${answers.phpVersion}`,
-      args: [
-        'PHP_EXTENSIONS=xdebug',
-        'WORDPRESS_VERSION=5.3',
-        'NODE_VERSION=10',
-        'WP_ENV=local',
-        'TEMPLATE_PHP_INI=development'
-      ]
-    },
-    volumes: [
-      './config/php/conf.d/local.ini:/usr/local/etc/php/conf.d/local.ini',
-      './config/nginx/fastcgi.d/read_timeout:/etc/nginx/fastcgi.d/read_timeout',
-      './config/nginx/global/logs-off.conf:/etc/nginx/global/logs-off.conf',
-      `${cacheVolume}:/var/www/.wp-cli/cache`,
-      '~/.ssh:/home/docker/.ssh',
-      `${ssDir}:/var/www/.snapshots`
-    ],
-    depends_on: ['redis'],
-    networks: ['default', 'airlocaldocker'],
-    dns: ['10.0.0.2'],
-    environment: {
-      VIRTUAL_PORT: 80,
-      WP_CLI_CACHE_DIR: '/var/www/.wp-cli/cache',
-      DB_HOST: 'mysql',
-      DB_USER: 'wordpress',
-      DB_PASSWORD: 'password',
-      DB_NAME: `${envSlug}`
-    }
-  }
-
-  // Additional nginx config based on selections above
-  baseConfig.services.phpfpm.environment.VIRTUAL_HOST = allHosts
-    .concat(starHosts)
-    .join(',')
-
-  baseConfig.services.phpfpm.volumes.push(
-    './config/wp-cli.local.yml:/var/www/wp-cli.yml'
-  )
-
   // Create webroot/config
   log(info('Copying required files'))
 
   await fs.copy(path.join(srcPath, 'config'), path.join(envPath, 'config'))
-
-  // Write Docker Compose
-  log(info('Generating docker-compose.yml file'))
-  const dockerCompose = Object.assign(baseConfig, networkConfig, volumeConfig)
-  await new Promise(resolve => {
-    yaml(
-      path.join(envPath, 'docker-compose.yml'),
-      dockerCompose,
-      { lineWidth: 500 },
-      function (err) {
-        if (err) {
-          logger.log('error', err)
-          log(error(err))
-        }
-        log(success('Done generating docker-compose.yml'))
-        resolve()
-      }
-    )
-  })
 
   // Media proxy is selected
   if (answers.mediaProxy === true) {
@@ -528,13 +467,6 @@ const createEnv = async function () {
       )
     })
   }
-
-  // Create database
-  log(info('Creating database'))
-  await database.create(envSlug)
-  await database.assignPrivs(envSlug)
-
-  await environment.start(envSlug)
 
   if ((await config.get('manageHosts')) === true) {
     log(info('Adding entry to hosts file'))
@@ -663,6 +595,95 @@ const createEnv = async function () {
       } catch (err) {
         logger.log('error', err)
       }
+
+      baseConfig.services.phpfpm = {
+        build: {
+          context: './config/build',
+          dockerfile: `Dockerfile-${answers.phpVersion}`,
+          args: [
+            'PHP_EXTENSIONS=xdebug',
+            'WORDPRESS_VERSION=5.3',
+            'NODE_VERSION=10',
+            'WP_ENV=local',
+            'TEMPLATE_PHP_INI=development'
+          ]
+        },
+        volumes: [
+          './config/php/conf.d/local.ini:/usr/local/etc/php/conf.d/local.ini',
+          './config/nginx/fastcgi.d/read_timeout:/etc/nginx/fastcgi.d/read_timeout',
+          './config/nginx/global/logs-off.conf:/etc/nginx/global/logs-off.conf',
+          `${cacheVolume}:/var/www/.wp-cli/cache`,
+          '~/.ssh:/home/docker/.ssh',
+          `${ssDir}:/var/www/.snapshots`,
+          `./${repoSlug}/web/wp-config.php:/var/www/web/wp-config.php`,
+          `./${repoSlug}/web/wp-content/mu-plugins:/var/www/web/wp-content/mu-plugins`,
+          `./${repoSlug}/web/wp-content/plugins/:/var/www/web/wp-content/plugins/`,
+          `./${repoSlug}/web/wp-content/themes/:/var/www/web/wp-content/themes/`,
+          `./${repoSlug}/config:/var/www/config`,
+          `./${repoSlug}/vendor:/var/www/vendor`
+        ],
+        depends_on: ['redis'],
+        networks: ['default', 'airlocaldocker'],
+        dns: ['10.0.0.2'],
+        environment: {
+          VIRTUAL_PORT: 80,
+          WP_CLI_CACHE_DIR: '/var/www/.wp-cli/cache',
+          DB_HOST: 'mysql',
+          DB_USER: 'root',
+          DB_PASSWORD: 'password',
+          DB_NAME: `${envSlug}`
+        }
+      }
+
+      // Additional nginx config based on selections above
+      baseConfig.services.phpfpm.environment.VIRTUAL_HOST = allHosts
+        .concat(starHosts)
+        .join(',')
+
+      baseConfig.services.phpfpm.volumes.push(
+        './config/wp-cli.local.yml:/var/www/wp-cli.yml'
+      )
+
+      // Write Docker Compose
+      log(info('Generating docker-compose.yml file'))
+      const dockerCompose = Object.assign(
+        baseConfig,
+        networkConfig,
+        volumeConfig
+      )
+      await new Promise(resolve => {
+        yaml(
+          path.join(envPath, 'docker-compose.yml'),
+          dockerCompose,
+          { lineWidth: 500 },
+          function (err) {
+            if (err) {
+              logger.log('error', err)
+              log(error(err))
+            }
+            log(success('Done generating docker-compose.yml'))
+            resolve()
+          }
+        )
+      })
+
+      // Create database
+      log(info('Creating database'))
+      // await database.create(envSlug)
+      // await database.assignPrivs(envSlug)
+
+      // Check for TTY
+      const ttyFlag = process.stdin.isTTY ? '' : '-T '
+
+      await environment.start(envSlug)
+
+      execSync(
+        `docker-compose exec ${ttyFlag}phpfpm wp db create --dbname=$DB_NAME`,
+        {
+          stdio: 'inherit',
+          cwd: envPath
+        }
+      )
     }
   }
 

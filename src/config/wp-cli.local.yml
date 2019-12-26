@@ -1,7 +1,7 @@
 path: /var/www/web
 config create:
   dbhost: mysql
-  dbuser: wordpress
+  dbuser: root
   dbpass: password
   extra-php: |
     define( 'DISALLOW_FILE_EDIT', true );
