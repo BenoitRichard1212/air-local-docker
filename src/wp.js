@@ -4,8 +4,12 @@ const gateway = require('./gateway')
 const environment = require('./environment')
 const envUtils = require('./util/utilities')
 const utils = require('./util/utilities')
-const log = console.log
 const error = chalk.bold.red
+const warning = chalk.keyword('orange')
+const info = chalk.keyword('cyan')
+const success = chalk.keyword('green')
+const logger = require('./util/logger')
+const log = console.log
 
 function help () {
   log(chalk.white('Usage: airlocal wp "[command]"'))
@@ -32,20 +36,23 @@ const command = async function (wpCmd) {
         await gateway.startGlobal()
         await environment.start(envSlug)
       }
-    } catch (ex) {}
+    } catch (err) {
+      logger.log('error', err)
+    }
 
     // Check for TTY
-    const ttyFlag = process.stdin.isTTY ? '' : '-T'
-
-    log(wpCmd)
+    const ttyFlag = process.stdin.isTTY ? '' : '-T '
 
     // Run the command
     try {
-      execSync(`docker-compose exec ${ttyFlag} phpfpm wp ${wpCmd}`, {
+      execSync(`docker-compose exec ${ttyFlag}phpfpm wp ${wpCmd}`, {
         stdio: 'inherit',
         cwd: envPath
       })
-    } catch (ex) {}
+    } catch (err) {
+      logger.log('error', err)
+      log(error('Error running wp cli command ') + info('wp ' + wpCmd))
+    }
   }
 }
 

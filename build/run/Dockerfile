@@ -1,5 +1,7 @@
 FROM quay.io/45air/wordpress
 
-RUN sudo npm install -g gulp
+USER root
+
+RUN npm install -g gulp
 
 WORKDIR /app

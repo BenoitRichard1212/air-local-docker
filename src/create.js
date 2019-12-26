@@ -14,9 +14,10 @@ const config = require('./configure')
 const ora = require('ora')
 const util = require('util')
 const exec = util.promisify(require('child_process').exec)
+const execSync = require('child_process').execSync
 const helpers = require('./util/helpers')
 const utils = require('./util/utilities')
-const pkg = require('./package.json')
+const pkg = require('../package.json')
 const axios = require('axios')
 const {
   srcPath,
@@ -573,8 +574,6 @@ const createEnv = async function () {
   await fs.writeJson(path.join(envPath, '.config.json'), envConfig)
 
   if (authConfig && answers.aircloud) {
-    // const spinnerSetup = ora('Setting up devops.45air.co repo...').start()
-
     let response
     const token = await auth.get('token')
     const options = {
@@ -618,21 +617,23 @@ const createEnv = async function () {
       branch = 'master'
     }
 
-    // spinnerSetup.text = 'Cloning ' + repoSlug + '...'
-    const { stdout, stderr } = await exec(
-      'cd ' +
-        envPath +
-        ' && git clone https://' +
-        userName +
-        ':' +
-        userPat +
-        '@devops.45air.co/' +
-        repoPath +
-        '.git && cd ' +
-        repoSlug +
-        ' && git checkout -b ' +
-        branch
-    )
+    try {
+      execSync(
+        'git clone https://' +
+          userName +
+          ':' +
+          userPat +
+          '@devops.45air.co/' +
+          repoPath +
+          '.git && cd ' +
+          repoSlug +
+          ' && git checkout -b ' +
+          branch,
+        { stdio: 'inherit', cwd: envPath }
+      )
+    } catch (err) {
+      logger.log('error', err)
+    }
 
     if (!fs.existsSync(envPath + '/' + repoSlug)) {
       log(error('Could not clone repo with credentials given'))
@@ -651,24 +652,18 @@ const createEnv = async function () {
       } catch (err) {
         log(err)
         logger.log('error', err)
+        log(error('Could not create auth.json file'))
       }
 
-      // spinnerSetup.text = 'Running composer install on ' + branch + ' branch...'
-
-      const { stdout, stderr } = await exec(
-        'cd ' + envPath + '/' + repoSlug + ' && airlocal run composer install'
-      )
-
-      log(stderr)
-      log(stdout)
-
-      if (stderr) {
-        logger.log('error', stderr)
-        log(error('Composer install failed'))
+      try {
+        execSync('airlocal run composer install', {
+          stdio: 'inherit',
+          cwd: envPath + '/' + repoSlug
+        })
+      } catch (err) {
+        logger.log('error', err)
       }
     }
-
-    // spinnerSetup.succeed('Done setting up project')
   }
 
   if (answers.wordpress) {

@@ -101,14 +101,11 @@ async function load (file) {
       process.exit(1)
     }
 
-    // Check for TTY
-    const ttyFlag = process.stdin.isTTY ? '' : '-T '
-
     try {
-      execSync(
-        `docker-compose exec ${ttyFlag}phpfpm sudo wp db import /var/www/.snapshots/${file} --allow-root`,
-        { stdio: 'inherit', cwd: envPath }
-      )
+      execSync(`airlocal wp "db import .snapshots/${file}"`, {
+        stdio: 'inherit',
+        cwd: envPath
+      })
     } catch (err) {
       logger.log('error', err)
       log(error('Error importing database'))

@@ -30,7 +30,7 @@ const composer = async function (command) {
 
   try {
     execSync(
-      'docker run --rm --interactive --tty --volume $PWD:/app --user ' +
+      'docker run --rm --interactive --tty --volume $PWD:/app  --entrypoint="" --user=' +
         userInfo.uid +
         ':' +
         userInfo.gid +
@@ -50,7 +50,7 @@ const npm = async function (command) {
 
   try {
     execSync(
-      'docker run --rm --interactive --tty --volume $PWD:/app --user ' +
+      'docker run --rm --interactive --tty --volume $PWD:/app --entrypoint="" --user=' +
         userInfo.uid +
         ':' +
         userInfo.gid +
@@ -70,7 +70,7 @@ const gulp = async function (command) {
 
   try {
     execSync(
-      'docker run --rm --interactive --tty --volume $PWD:/app --user ' +
+      'docker run --rm --interactive --tty --volume $PWD:/app --entrypoint="" --user=' +
         userInfo.uid +
         ':' +
         userInfo.gid +

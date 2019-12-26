@@ -27,7 +27,7 @@ const logs = require('./src/logs')
 const wp = require('./src/wp')
 
 // AirLocal includes
-const pkg = require('../package.json')
+const pkg = require('./package.json')
 const utils = require('./src/util/utilities')
 const { rootPath } = require('./src/util/variables')
 
@@ -464,14 +464,31 @@ configure.checkIfConfigured().then(async resp => {
       log(success('Upgrade tasks complete'))
     }
 
-    program.parse(process.argv)
+    const theArg = process.argv
 
-    if (!process.argv.slice(2).length) {
-      log(warning('You need to enter a command'))
-
-      program.outputHelp(txt => {
-        return chalk.white(txt)
+    if (theArg.slice(2)[0] === 'wp') {
+      const newArg = []
+      let wpCmd = ''
+      process.argv.forEach((val, index) => {
+        if (index <= 2) {
+          newArg.push(val)
+        } else {
+          wpCmd = wpCmd + ' ' + val
+        }
       })
+      wpCmd = wpCmd.trim()
+      newArg.push(wpCmd)
+      program.parse(newArg)
+    } else {
+      program.parse(process.argv)
+
+      if (!process.argv.slice(2).length) {
+        log(warning('You need to enter a command'))
+
+        program.outputHelp(txt => {
+          return chalk.white(txt)
+        })
+      }
     }
   } else {
     configure.promptUnconfigured()

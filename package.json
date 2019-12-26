@@ -17,7 +17,7 @@
     "45press",
     "local"
   ],
-  "main": "index.js",
+  "main": "airlocal",
   "scripts": {
     "test": "ava --verbose",
     "test:watch": "ava --verbose --watch",
