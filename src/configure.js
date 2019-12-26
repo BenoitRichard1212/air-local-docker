@@ -149,7 +149,11 @@ async function prompt () {
   const existingVer = await get('version')
 
   if (!existingVer) {
-    log(warning('You are updating from a pre 1.x.x version of AirLocal, we need to run some update tasks on your environment...'))
+    log(
+      warning(
+        'You are updating from a pre 1.x.x version of AirLocal, we need to run some update tasks on your environment...'
+      )
+    )
     await set('version', pkg.version)
     await utils.runUpdateTasks(existingVer, pkg.version)
   }

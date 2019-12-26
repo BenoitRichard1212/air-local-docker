@@ -16,9 +16,14 @@ const util = require('util')
 const exec = util.promisify(require('child_process').exec)
 const helpers = require('./util/helpers')
 const utils = require('./util/utilities')
-const pkg = require('../package.json')
+const pkg = require('./package.json')
 const axios = require('axios')
-const { srcPath, cacheVolume, globalPath, rootPath } = require('./util/variables')
+const {
+  srcPath,
+  cacheVolume,
+  globalPath,
+  rootPath
+} = require('./util/variables')
 
 const log = console.log
 const logger = require('./util/logger')
@@ -28,6 +33,7 @@ const info = chalk.keyword('cyan')
 const success = chalk.keyword('green')
 
 const createEnv = async function () {
+  log(rootPath)
   const authConfig = await auth.checkIfAuthConfigured()
 
   var baseConfig = {
@@ -62,7 +68,8 @@ const createEnv = async function () {
     {
       name: 'hostname',
       type: 'input',
-      message: 'What is the primary hostname for your site? (Must be a .test domain Ex: docker.test)',
+      message:
+        'What is the primary hostname for your site? (Must be a .test domain Ex: docker.test)',
       validate: helpers.validateNotEmpty,
       filter: helpers.parseHostname
     },
@@ -202,7 +209,8 @@ const createEnv = async function () {
     {
       name: 'id',
       type: 'number',
-      message: 'What is the devops.45air.co Gitlab project ID? (Project Overview > Details - Right under the repo title)',
+      message:
+        'What is the devops.45air.co Gitlab project ID? (Project Overview > Details - Right under the repo title)',
       validate: helpers.validateNumber,
       when: function (answers) {
         return answers.aircloud === true
@@ -221,7 +229,8 @@ const createEnv = async function () {
     {
       name: 'hostname',
       type: 'input',
-      message: 'What is the primary hostname for your site? (Must be a .test domain Ex: docker.test)',
+      message:
+        'What is the primary hostname for your site? (Must be a .test domain Ex: docker.test)',
       validate: helpers.validateNotEmpty,
       filter: helpers.parseHostname
     },
@@ -486,7 +495,11 @@ const createEnv = async function () {
         function (err, curConfig) {
           if (err) {
             logger.log('error', err)
-            log(error('Failed to read nginx configuration file. Your media proxy has not been set.'))
+            log(
+              error(
+                'Failed to read nginx configuration file. Your media proxy has not been set.'
+              )
+            )
             resolve()
             return
           }
@@ -498,7 +511,11 @@ const createEnv = async function () {
             function (err) {
               if (err) {
                 logger.log('error', err)
-                log(error('Failed to write configuration file. Your media proxy has not been set.'))
+                log(
+                  error(
+                    'Failed to write configuration file. Your media proxy has not been set.'
+                  )
+                )
                 resolve()
               }
             }
@@ -525,7 +542,7 @@ const createEnv = async function () {
     }
     await new Promise(resolve => {
       const hostsstring = allHosts.join(' ')
-      const hostsCmd = path.join(rootPath, 'hosts.js')
+      const hostsCmd = path.join(rootPath, 'airlocal-hosts')
       sudo.exec(hostsCmd + ' add ' + hostsstring, sudoOptions, function (
         error,
         stdout,
@@ -533,7 +550,11 @@ const createEnv = async function () {
       ) {
         if (error) {
           logger.log('error', error)
-          log(warning('Add "127.0.0.1 ' + hostsstring + '" to your hosts file manually'))
+          log(
+            warning(
+              'Add "127.0.0.1 ' + hostsstring + '" to your hosts file manually'
+            )
+          )
           resolve()
         }
 
@@ -561,7 +582,10 @@ const createEnv = async function () {
     }
 
     try {
-      response = await axios.get('https://devops.45air.co/api/v4/projects/' + answers.id, options)
+      response = await axios.get(
+        'https://devops.45air.co/api/v4/projects/' + answers.id,
+        options
+      )
     } catch (err) {
       logger.log('error', err)
 
@@ -572,7 +596,11 @@ const createEnv = async function () {
         process.exit(1)
       } else if (err.request) {
         // No response received from server
-        log(error('No response from the server. Logging the error request and exiting'))
+        log(
+          error(
+            'No response from the server. Logging the error request and exiting'
+          )
+        )
         process.exit(1)
       }
 
@@ -591,7 +619,20 @@ const createEnv = async function () {
     }
 
     // spinnerSetup.text = 'Cloning ' + repoSlug + '...'
-    const { stdout, stderr } = await exec('cd ' + envPath + ' && git clone https://' + userName + ':' + userPat + '@devops.45air.co/' + repoPath + '.git && cd ' + repoSlug + ' && git checkout -b ' + branch)
+    const { stdout, stderr } = await exec(
+      'cd ' +
+        envPath +
+        ' && git clone https://' +
+        userName +
+        ':' +
+        userPat +
+        '@devops.45air.co/' +
+        repoPath +
+        '.git && cd ' +
+        repoSlug +
+        ' && git checkout -b ' +
+        branch
+    )
 
     if (!fs.existsSync(envPath + '/' + repoSlug)) {
       log(error('Could not clone repo with credentials given'))
@@ -614,7 +655,9 @@ const createEnv = async function () {
 
       // spinnerSetup.text = 'Running composer install on ' + branch + ' branch...'
 
-      const { stdout, stderr } = await exec('cd ' + envPath + '/' + repoSlug + ' && airlocal run composer install')
+      const { stdout, stderr } = await exec(
+        'cd ' + envPath + '/' + repoSlug + ' && airlocal run composer install'
+      )
 
       log(stderr)
       log(stdout)
@@ -646,12 +689,18 @@ const createEnv = async function () {
 
   log(info('Visit your new site @ http://' + answers.hostname))
 
-  log(warning('NOTE: It could take up to 60 seconds for the site to come completely up'))
+  log(
+    warning(
+      'NOTE: It could take up to 60 seconds for the site to come completely up'
+    )
+  )
 
   if (answers.wordpressType === 'subdomain') {
-    log(info(
-      'NOTE: Subdomain multisites require any additional subdomains to be added manually to your hosts file'
-    ))
+    log(
+      info(
+        'NOTE: Subdomain multisites require any additional subdomains to be added manually to your hosts file'
+      )
+    )
   }
 }
 

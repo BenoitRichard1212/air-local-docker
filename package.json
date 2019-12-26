@@ -26,11 +26,10 @@
     "lint": "eslint ."
   },
   "bin": {
-    "airlocal": "bin/airlocal",
-    "airlocal-hosts": "bin/airlocal-hosts"
+    "airlocal": "airlocal",
+    "airlocal-hosts": "airlocal-hosts"
   },
   "files": [
-    "bin/",
     "global/",
     "src/",
     "LICENSE"
@@ -81,8 +80,8 @@
       "./tests/**/*.test.js"
     ],
     "sources": [
-      "./bin/airlocal",
-      "./bin/airlocal-hosts",
+      "./airlocal",
+      "./airlocal-hosts",
       "./src/*.js",
       "./src/**/*.js"
     ],

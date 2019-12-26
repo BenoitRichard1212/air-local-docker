@@ -53,11 +53,7 @@ async function install (env, envHost, answers) {
   }
 
   execSync(
-    `docker-compose exec phpfpm /bin/bash -c "wp core ${command} ${flags} --url=http://${envHost} --title=\\"${
-      answers.title
-    }\\" --admin_user=\\"${answers.username}\\" --admin_password=\\"${
-      answers.password
-    }\\" --admin_email=\\"${answers.email}\\""`,
+    `docker-compose exec phpfpm /bin/bash -c "wp core ${command} ${flags} --url=http://${envHost} --title=\\"${answers.title}\\" --admin_user=\\"${answers.username}\\" --admin_password=\\"${answers.password}\\" --admin_email=\\"${answers.email}\\""`,
     { stdio: 'inherit', cwd: envPath }
   )
 }
@@ -74,10 +70,10 @@ async function setRewrites (env) {
 async function emptyContent (env) {
   const envPath = await utils.envPath(env)
 
-  execSync(
-    'docker-compose exec phpfpm /bin/bash -c "wp site empty --yes"',
-    { stdio: 'inherit', cwd: envPath }
-  )
+  execSync('docker-compose exec phpfpm /bin/bash -c "wp site empty --yes"', {
+    stdio: 'inherit',
+    cwd: envPath
+  })
   execSync(
     'docker-compose exec phpfpm /bin/bash -c "wp plugin delete hello akismet"',
     { stdio: 'inherit', cwd: envPath }

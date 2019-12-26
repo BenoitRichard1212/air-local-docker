@@ -6,7 +6,7 @@ const chalk = require('chalk')
 const error = chalk.bold.red
 const info = chalk.keyword('cyan')
 const success = chalk.keyword('green')
-const logger = require('../src/util/logger')
+const logger = require('./src/util/logger')
 const log = console.log
 
 // Init the CLI

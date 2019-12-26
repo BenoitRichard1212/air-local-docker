@@ -41,10 +41,10 @@ const command = async function (wpCmd) {
 
     // Run the command
     try {
-      execSync(
-        `docker-compose exec ${ttyFlag} phpfpm wp ${wpCmd}`,
-        { stdio: 'inherit', cwd: envPath }
-      )
+      execSync(`docker-compose exec ${ttyFlag} phpfpm wp ${wpCmd}`, {
+        stdio: 'inherit',
+        cwd: envPath
+      })
     } catch (ex) {}
   }
 }

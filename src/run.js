@@ -1,4 +1,5 @@
 const path = require('path')
+const os = require('os')
 const chalk = require('chalk')
 const execSync = require('child_process').execSync
 const { rootPath } = require('./util/variables')
@@ -25,39 +26,60 @@ function help () {
 const composer = async function (command) {
   await buildRunImg()
 
+  const userInfo = os.userInfo()
+
   try {
     execSync(
-      'docker run --rm --interactive --volume $PWD:/app --user $(id -u):$(id -g) airlocal-run:phplatest-node10 composer ' + command,
+      'docker run --rm --interactive --tty --volume $PWD:/app --user ' +
+        userInfo.uid +
+        ':' +
+        userInfo.gid +
+        ' airlocal-run:phplatest-node10 composer ' +
+        command,
       { stdio: 'inherit' }
     )
   } catch (err) {
-
+    logger.log('error', err)
   }
 }
 
 const npm = async function (command) {
   await buildRunImg()
 
+  const userInfo = os.userInfo()
+
   try {
     execSync(
-      'docker run --rm --interactive --volume $PWD:/app --user $(id -u):$(id -g) airlocal-run:phplatest-node10 npm ' + command,
+      'docker run --rm --interactive --tty --volume $PWD:/app --user ' +
+        userInfo.uid +
+        ':' +
+        userInfo.gid +
+        ' airlocal-run:phplatest-node10 npm ' +
+        command,
       { stdio: 'inherit' }
     )
   } catch (err) {
-
+    logger.log('error', err)
   }
 }
 
 const gulp = async function (command) {
   await buildRunImg()
 
+  const userInfo = os.userInfo()
+
   try {
     execSync(
-      'docker run --rm --interactive --volume $PWD:/app --user $(id -u):$(id -g) airlocal-run:phplatest-node10 gulp ' + command,
+      'docker run --rm --interactive --tty --volume $PWD:/app --user ' +
+        userInfo.uid +
+        ':' +
+        userInfo.gid +
+        ' airlocal-run:phplatest-node10 gulp ' +
+        command,
       { stdio: 'inherit' }
     )
   } catch (err) {
-
+    logger.log('error', err)
   }
 }
 
@@ -66,7 +88,9 @@ const buildRunImg = async function () {
 
   try {
     execSync(
-      'cd ' + buildDir + ' && docker build --build-arg NODE_VERSION="10" -t airlocal-run:phplatest-node10 .',
+      'cd ' +
+        buildDir +
+        ' && docker build --build-arg NODE_VERSION="10" -t airlocal-run:phplatest-node10 .',
       { stdio: 'inherit' }
     )
     log(success('Built airlocal-run:phplatest-node10'))

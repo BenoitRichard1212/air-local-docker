@@ -25,7 +25,9 @@ function help () {
   log()
   log(chalk.white('Commands:'))
   log(chalk.white('  configure/config   ') + info('Setup authentication'))
-  log(chalk.white('  status             ') + info('Check authentication status'))
+  log(
+    chalk.white('  status             ') + info('Check authentication status')
+  )
 }
 
 const getAuthConfigDirectory = function () {
@@ -127,7 +129,11 @@ const configure = async function () {
   await set('customer', answers.customer)
 
   if (!answers.customer) {
-    log(warning('Sign up for 45AIR Cloud if you want to get the benefits customers have with AIRLocal'))
+    log(
+      warning(
+        'Sign up for 45AIR Cloud if you want to get the benefits customers have with AIRLocal'
+      )
+    )
     process.exit(0)
   }
 
@@ -148,7 +154,11 @@ const configure = async function () {
       process.exit(1)
     } else if (err.request) {
       // No response received from server
-      log(error('No response from the server. Logging the error request and exiting'))
+      log(
+        error(
+          'No response from the server. Logging the error request and exiting'
+        )
+      )
       process.exit(1)
     }
 
@@ -186,7 +196,10 @@ const status = async function () {
   }
 
   try {
-    response = await axios.get('https://devops.45air.co/api/v4/groups/' + group, options)
+    response = await axios.get(
+      'https://devops.45air.co/api/v4/groups/' + group,
+      options
+    )
   } catch (err) {
     logger.log('error', err)
 
@@ -196,7 +209,11 @@ const status = async function () {
       process.exit(1)
     } else if (err.request) {
       // No response received from server
-      log(error('No response from the server. Logging the error request and exiting'))
+      log(
+        error(
+          'No response from the server. Logging the error request and exiting'
+        )
+      )
       process.exit(1)
     }
 

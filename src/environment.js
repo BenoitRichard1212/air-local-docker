@@ -252,25 +252,33 @@ const deleteEnv = async function (env) {
       for (let i = 0, len = envHosts.length; i < len; i++) {
         await new Promise(resolve => {
           log(` - Removing ${envHosts}`)
-          const hostsCmd = path.join(rootPath, 'hosts.js')
-          sudo.exec(
-            hostsCmd + ` remove ${envHosts}`,
-            sudoOptions,
-            function (error, stdout, stderr) {
-              if (error) {
-                log(error('Something went wrong deleting host file entries. There may still be remnants in /etc/hosts'))
-                resolve()
-                return
-              }
-              log(success(stdout))
+          const hostsCmd = path.join(rootPath, 'airlocal-hosts')
+          sudo.exec(hostsCmd + ` remove ${envHosts}`, sudoOptions, function (
+            error,
+            stdout,
+            stderr
+          ) {
+            if (error) {
+              log(
+                error(
+                  'Something went wrong deleting host file entries. There may still be remnants in /etc/hosts'
+                )
+              )
               resolve()
+              return
             }
-          )
+            log(success(stdout))
+            resolve()
+          })
         })
       }
     } catch (err) {
       // Unfound config, etc
-      log(error('Something went wrong deleting host file entries. There may still be remnants in /etc/hosts'))
+      log(
+        error(
+          'Something went wrong deleting host file entries. There may still be remnants in /etc/hosts'
+        )
+      )
     }
   }
 
@@ -280,7 +288,11 @@ const deleteEnv = async function (env) {
   } catch (err) {
     // Most likely we got a permissions error here
     logger.log('error', err)
-    log(error('Error deleting some of the site files, trying with elevated permissions'))
+    log(
+      error(
+        'Error deleting some of the site files, trying with elevated permissions'
+      )
+    )
 
     const options = {
       name: 'AIRLOCAL'

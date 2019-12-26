@@ -13,30 +13,30 @@ const compareVersions = require('compare-versions')
 const updateNotifier = require('update-notifier')
 
 // AirLocal commands includes
-const auth = require('../src/auth')
-const cache = require('../src/cache')
-const configure = require('../src/configure')
-const create = require('../src/create')
-const snapshots = require('../src/snapshots')
-const shell = require('../src/shell')
-const run = require('../src/run')
-const image = require('../src/image')
+const auth = require('./src/auth')
+const cache = require('./src/cache')
+const configure = require('./src/configure')
+const create = require('./src/create')
+const snapshots = require('./src/snapshots')
+const shell = require('./src/shell')
+const run = require('./src/run')
+const image = require('./src/image')
 const hosts = require('./airlocal-hosts')
-const environment = require('../src/environment')
-const logs = require('../src/logs')
-const wp = require('../src/wp')
+const environment = require('./src/environment')
+const logs = require('./src/logs')
+const wp = require('./src/wp')
 
 // AirLocal includes
 const pkg = require('../package.json')
-const utils = require('../src/util/utilities')
-const { rootPath } = require('../src/util/variables')
+const utils = require('./src/util/utilities')
+const { rootPath } = require('./src/util/variables')
 
 // Logging includes
 const error = chalk.bold.red
 const warning = chalk.keyword('orange')
 const info = chalk.keyword('cyan')
 const success = chalk.keyword('green')
-const logger = require('../src/util/logger')
+const logger = require('./src/util/logger')
 const log = console.log
 
 // Check for updates on npmjs
@@ -153,7 +153,7 @@ program
   .command('hosts [cmd] [host]')
   .description(info('Manage the hosts file'))
   .action((cmd, host) => {
-    const hostsCmd = path.join(rootPath, 'hosts.js')
+    const hostsCmd = path.join(rootPath, 'airlocal-hosts')
 
     const options = {
       name: 'AIRLOCAL'
