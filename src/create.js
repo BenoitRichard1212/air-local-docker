@@ -378,9 +378,6 @@ const createEnv = async function () {
   const envSlug = utils.envSlug(envHost)
   const envPath = await utils.envPath(envHost)
 
-  // Default nginx configuration file
-  const nginxConfig = 'default.conf'
-
   if ((await fs.exists(envPath)) === true) {
     log(
       error('Error: ') +
@@ -430,7 +427,7 @@ const createEnv = async function () {
 
     await new Promise(resolve => {
       fs.readFile(
-        path.join(envPath, 'config', 'nginx', nginxConfig),
+        path.join(envPath, 'config', 'nginx', 'global', 'media-proxy.conf'),
         'utf8',
         function (err, curConfig) {
           if (err) {
@@ -445,7 +442,7 @@ const createEnv = async function () {
           }
 
           fs.writeFile(
-            path.join(envPath, 'config', 'nginx', nginxConfig),
+            path.join(envPath, 'config', 'nginx', 'global', 'media-proxy.conf'),
             createProxyConfig(answers.proxy, curConfig),
             'utf8',
             function (err) {
@@ -616,6 +613,7 @@ const createEnv = async function () {
           './config/php/conf.d/local.ini:/usr/local/etc/php/conf.d/local.ini',
           './config/nginx/fastcgi.d/read_timeout:/etc/nginx/fastcgi.d/read_timeout',
           './config/nginx/global/logs-off.conf:/etc/nginx/global/logs-off.conf',
+          './config/nginx/global/media-proxy.conf:/etc/nginx/global/media-proxy.conf',
           `${cacheVolume}:/var/www/.wp-cli/cache`,
           '~/.ssh:/home/docker/.ssh',
           `${ssDir}:/var/www/.snapshots`,
