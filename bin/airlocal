@@ -1,0 +1,479 @@
+#!/usr/bin/env node
+
+// Setup error logging early
+const logProcessErrors = require('log-process-errors')
+logProcessErrors()
+
+// Upstream packages
+const path = require('path')
+const chalk = require('chalk')
+const commander = require('commander')
+const sudo = require('sudo-prompt')
+const compareVersions = require('compare-versions')
+const updateNotifier = require('update-notifier')
+
+// AirLocal commands includes
+const auth = require('../src/auth')
+const cache = require('../src/cache')
+const configure = require('../src/configure')
+const create = require('../src/create')
+const snapshots = require('../src/snapshots')
+const shell = require('../src/shell')
+const run = require('../src/run')
+const image = require('../src/image')
+const hosts = require('./airlocal-hosts')
+const environment = require('../src/environment')
+const logs = require('../src/logs')
+const wp = require('../src/wp')
+
+// AirLocal includes
+const pkg = require('../package.json')
+const utils = require('../src/util/utilities')
+const { rootPath } = require('../src/util/variables')
+
+// Logging includes
+const error = chalk.bold.red
+const warning = chalk.keyword('orange')
+const info = chalk.keyword('cyan')
+const success = chalk.keyword('green')
+const logger = require('../src/util/logger')
+const log = console.log
+
+// Check for updates on npmjs
+const notifier = updateNotifier({ pkg })
+notifier.notify()
+
+// Init the CLI
+const program = new commander.Command()
+
+/**
+ * AIRLOCAL AUTH
+ *
+ * Subcommands:
+ *   - config
+ *   - status
+ */
+program
+  .command('auth <cmd>')
+  .description(info('Set up authentication for AIR customers'))
+  .action(cmd => {
+    switch (cmd) {
+      case 'configure':
+      case 'config':
+        auth.configure()
+        break
+      case 'status':
+        auth.status()
+        break
+      default:
+        auth.help()
+        break
+    }
+  })
+  .on('--help', () => {
+    auth.help()
+  })
+
+/**
+ * AIRLOCAL CACHE
+ *
+ * Subcommands:
+ *   - clear
+ *   - info
+ */
+program
+  .command('cache <cmd>')
+  .description(info('Manage the build cache volume'))
+  .action(cmd => {
+    switch (cmd) {
+      case 'info':
+        cache.printInfo()
+        break
+      case 'clear':
+        cache.clear()
+        break
+      default:
+        cache.help()
+        break
+    }
+  })
+  .on('--help', () => {
+    cache.help()
+  })
+
+/**
+ * AIRLOCAL CONFIGURE
+ * Alias: config
+ */
+program
+  .command('configure')
+  .alias('config')
+  .description(info('Set up your AirLocal environment'))
+  .action(() => {
+    configure.command()
+  })
+
+/**
+ * AIRLOCAL CREATE
+ * Alias: new
+ */
+program
+  .command('create')
+  .alias('new')
+  .description(info('Create a new web local environment'))
+  .action(() => {
+    create.command()
+  })
+
+/**
+ * AIRLOCAL DELETE
+ *
+ * Subcommands:
+ *   - all
+ */
+program
+  .command('delete [env]')
+  .description(info('Deletes a specific docker environment'))
+  .action(env => {
+    environment.deleteEnv(env)
+  })
+  .on('--help', () => {
+    environment.deleteHelp()
+  })
+
+/**
+ * AIRLOCAL HOSTS
+ *
+ * Subcommands:
+ *   - add
+ *   - remove
+ *   - list
+ */
+program
+  .command('hosts [cmd] [host]')
+  .description(info('Manage the hosts file'))
+  .action((cmd, host) => {
+    const hostsCmd = path.join(rootPath, 'hosts.js')
+
+    const options = {
+      name: 'AIRLOCAL'
+    }
+
+    switch (cmd) {
+      case 'add':
+        if (host === undefined) {
+          log(error('You need to pass a host url to add'))
+          process.exit(1)
+        }
+
+        sudo.exec(hostsCmd + ` add ${host}`, options, function (
+          err,
+          stdout,
+          stderr
+        ) {
+          if (err) {
+            logger.log('error', err)
+            log(error(stderr))
+            process.exit(1)
+          }
+
+          log(success(stdout))
+        })
+        break
+      case 'remove':
+        if (host === undefined) {
+          log(error('You need to pass a host url to remove'))
+          process.exit(1)
+        }
+
+        sudo.exec(hostsCmd + ` remove ${host}`, options, function (
+          err,
+          stdout,
+          stderr
+        ) {
+          if (err) {
+            logger.log('error', err)
+            log(error(stderr))
+            process.exit(1)
+          }
+
+          log(success(stdout))
+        })
+        break
+      case 'list':
+        sudo.exec(hostsCmd + ' list', options, function (err, stdout, stderr) {
+          if (err) {
+            logger.log('error', err)
+            log(error(stderr))
+            process.exit(1)
+          }
+
+          log(info(stdout))
+        })
+        break
+      default:
+        hosts.help()
+        break
+    }
+  })
+  .on('--help', () => {
+    hosts.help()
+  })
+
+/**
+ * AIRLOCAL IMAGE
+ *
+ * Subcommands:
+ *   - update
+ */
+program
+  .command('image <cmd> [img]')
+  .description(info('Manages docker images used by this environment'))
+  .action((cmd, img) => {
+    switch (cmd) {
+      case 'update':
+        if (img === 'all') {
+          image.updateAll()
+        } else {
+          image.update(img)
+        }
+        break
+      default:
+        image.help()
+        break
+    }
+  })
+  .on('--help', () => {
+    image.help()
+  })
+
+/**
+ * AIRLOCAL LOGS
+ */
+program
+  .command('logs [container]')
+  .description(
+    info('Streams docker logs') + chalk.gray(' (default: all containers)')
+  )
+  .action(container => {
+    if (!container) {
+      logs.command('')
+    } else {
+      logs.command(container)
+    }
+  })
+  .on('--help', () => {
+    logs.help()
+  })
+
+/**
+ * AIRLOCAL RESTART
+ *
+ * Subcommands:
+ *   - all
+ */
+program
+  .command('restart [env]')
+  .description(info('Restarts a specific docker environment'))
+  .action(env => {
+    environment.restart(env)
+  })
+  .on('--help', () => {
+    environment.restartHelp()
+  })
+
+/**
+ * AIRLOCAL SHELL
+ */
+program
+  .command('shell [container]')
+  .description(
+    info('Opens a shell in a container') + chalk.gray(' (default: phpfpm)')
+  )
+  .action(container => {
+    shell.command(container)
+  })
+  .on('--help', () => {
+    shell.help()
+  })
+
+/**
+ * AIRLOCAL RUN
+ *
+ * Subcommands:
+ *   - composer
+ *   - npm
+ *   - gulp
+ */
+program
+  .command('run <service> [command...]')
+  .description(info('Runs composer and npm commands'))
+  .action((service, cmd) => {
+    switch (service) {
+      case 'composer':
+        run.composer(cmd)
+        break
+      case 'npm':
+        run.npm(cmd)
+        break
+      case 'gulp':
+        run.gulp(cmd)
+        break
+      default:
+        run.help()
+        break
+    }
+  })
+  .on('--help', () => {
+    run.help()
+  })
+
+/**
+ * AIRLOCAL SNAPSHOTS
+ * Alias: ss
+ *
+ * Subcommands:
+ *   - pull
+ *   - list
+ *   - load
+ */
+program
+  .command('snapshots [cmd] [file]')
+  .alias('ss')
+  .description(info('Runs db snapshots commands'))
+  .action((cmd, file) => {
+    switch (cmd) {
+      case 'pull':
+        snapshots.pull()
+        break
+      case 'load':
+        if (!file) {
+          log(error('You need to specify an import file'))
+          process.exit(1)
+        }
+        snapshots.load(file)
+        break
+      case 'list':
+        snapshots.list()
+        break
+      default:
+        snapshots.help()
+        break
+    }
+  })
+  .on('--help', () => {
+    snapshots.help()
+  })
+
+/**
+ * AIRLOCAL START
+ *
+ * Subcommands:
+ *   - all
+ */
+program
+  .command('start [env]')
+  .description(info('Starts a specific web local environment'))
+  .action(env => {
+    environment.start(env)
+  })
+  .on('--help', () => {
+    environment.startHelp()
+  })
+
+/**
+ * AIRLOCAL STOP
+ *
+ * Subcommands:
+ *   - all
+ */
+program
+  .command('stop [env]')
+  .description(info('Stops a specific docker environment'))
+  .action(env => {
+    environment.stop(env)
+  })
+  .on('--help', () => {
+    environment.stopHelp()
+  })
+
+/**
+ * AIRLOCAL VERSION
+ */
+program
+  .command('version')
+  .description(info('Show AIRLocal CLI version'))
+  .action(() => {
+    log(info('AirLocal CLI v' + info(pkg.version)))
+  })
+
+/**
+ * AIRLOCAL WP
+ */
+program
+  .command('wp [command...]')
+  .description(info('Runs a wp-cli command in your current environment'))
+  .action(command => {
+    wp.command(command)
+  })
+  .on('--help', () => {
+    wp.help()
+  })
+
+/**
+ * AirLocal before command hook
+ *
+ * This runs on every CLI command before processing the user args
+ * Put things here like checking for an update to AirLocal etc.
+ */
+configure.checkIfConfigured().then(async resp => {
+  if (resp) {
+    let configVer
+    try {
+      configVer = await configure.get('version')
+    } catch (err) {
+      logger.log('error', err)
+      log(
+        error('Could not get last configured version, run ') +
+          info('airlocal config') +
+          error(' before continuing')
+      )
+      process.exit(1)
+    }
+
+    let versionsEqual = false
+
+    if (!configVer) {
+      const commandInQueue = process.argv[2]
+      if (commandInQueue !== 'config' && commandInQueue !== 'configure') {
+        log(
+          error('Could not get last configured version, run ') +
+            info('airlocal config') +
+            error(' before continuing')
+        )
+        process.exit(1)
+      }
+    } else {
+      versionsEqual = compareVersions.compare(configVer, pkg.version, '=')
+    }
+
+    if (!versionsEqual && configVer) {
+      log(warning('You have just updated AirLocal... Running upgrade tasks...'))
+      await configure.set('version', pkg.version)
+      await utils.runUpdateTasks(configVer, pkg.version)
+      log(success('Upgrade tasks complete'))
+    }
+
+    program.parse(process.argv)
+
+    if (!process.argv.slice(2).length) {
+      log(warning('You need to enter a command'))
+
+      program.outputHelp(txt => {
+        return chalk.white(txt)
+      })
+    }
+  } else {
+    configure.promptUnconfigured()
+  }
+})
