@@ -22,10 +22,9 @@ function help () {
   log(chalk.white('  -h, --help       output usage information'))
   log()
   log(chalk.white('Commands:'))
-  log(
-    chalk.white('  create           ') +
-      info('Create a DB snapshot for the current env')
-  )
+  log(chalk.white('  list           ') + info('List all DB snapshots available'))
+  log(chalk.white('  pull           ') + info('Pull DB snapshot from one of your AirCloud environments'))
+  log(chalk.white('  load [file]    ') + info('Import a DB snapshot into one of your AirLocal environments'))
 }
 
 async function getSnapshotsDir () {

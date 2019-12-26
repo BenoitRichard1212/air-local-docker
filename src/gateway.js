@@ -1,17 +1,20 @@
 const chalk = require('chalk')
-const log = console.log
-const info = chalk.keyword('cyan')
-const warning = chalk.keyword('orange')
 const execSync = require('child_process').execSync
 const exec = require('child_process').exec
 const { globalPath, cacheVolume } = require('./util/variables')
+const error = chalk.bold.red
+const warning = chalk.keyword('orange')
+const info = chalk.keyword('cyan')
+const success = chalk.keyword('green')
+const logger = require('./util/logger')
+const log = console.log
 
 // Tracks if we've started global inside of this session
 let started = false
 
 const ensureNetworkExists = function () {
   try {
-    log(chalk.white('Ensuring global network exists'))
+    log(info('Ensuring global network exists'))
     const networks = execSync(
       'docker network ls --filter name=^airlocaldocker$'
     ).toString()
@@ -30,14 +33,14 @@ const ensureNetworkExists = function () {
 
 const removeNetwork = function () {
   try {
-    log(chalk.white('Removing Global Network'))
+    log(info('Removing Global Network'))
     execSync('docker network rm airlocaldocker')
   } catch (ex) {}
 }
 
 const ensureCacheExists = async function () {
   try {
-    log(chalk.white('Ensuring global cache volume exists'))
+    log(info('Ensuring global cache volume exists'))
     const volumes = await exec(
       `docker volume ls --filter name=${cacheVolume}`
     ).toString()
@@ -53,7 +56,7 @@ const ensureCacheExists = async function () {
 
 const removeCacheVolume = async function () {
   try {
-    log(chalk.white('Removing cache volume'))
+    log(info('Removing cache volume'))
     const volumes = await exec(
       `docker volume ls --filter name=${cacheVolume}`
     ).toString()
@@ -61,7 +64,9 @@ const removeCacheVolume = async function () {
       await exec(`docker volume rm ${cacheVolume}`)
       log(info(' - Volume Removed'))
     }
-  } catch (ex) {}
+  } catch (err) {
+    logger.log('error', err)
+  }
 }
 
 const occurrences = function (string, subString, allowOverlapping) {
@@ -119,28 +124,38 @@ const waitForDB = function () {
 }
 
 const startGateway = async function () {
-  log(chalk.white('Ensuring global services are running'))
+  log(info('Ensuring global services are running'))
 
   try {
     execSync('docker-compose up -d', { stdio: 'inherit', cwd: globalPath })
   } catch (err) {
-    console.log(err)
+    logger.log('error', err)
+    log(error('Error running ') + warning('docker-compose up -d'))
   }
 
   await waitForDB()
-  log()
 }
 
 const stopGateway = function () {
-  log(chalk.white('Stopping global services'))
-  execSync('docker-compose down', { stdio: 'inherit', cwd: globalPath })
-  log()
+  log(info('Stopping global services'))
+  try {
+    execSync('docker-compose down', { stdio: 'inherit', cwd: globalPath })
+  } catch (err) {
+    logger.log('error', err)
+    log(error('Error running ') + warning('docker-compose down'))
+    log(info('Stopping all docker containers instead'))
+    execSync('docker stop $(docker ps -a -q)', { stdio: 'inherit' })
+  }
 }
 
 const restartGateway = function () {
-  log(chalk.white('Restarting global services'))
-  execSync('docker-compose restart', { stdio: 'inherit', cwd: globalPath })
-  log()
+  log(info('Restarting global services'))
+  try {
+    execSync('docker-compose restart', { stdio: 'inherit', cwd: globalPath })
+  } catch (err) {
+    logger.log('error', err)
+    log(error('Error running ') + warning('docker-compose restart'))
+  }
 }
 
 const startGlobal = async function () {

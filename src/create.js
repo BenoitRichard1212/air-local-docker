@@ -551,16 +551,8 @@ const createEnv = async function () {
   }
   await fs.writeJson(path.join(envPath, '.config.json'), envConfig)
 
-  const spinner = ora('Adding PHP dev extensions, this could take a few minutes...').start()
-
-  const { stdout, stderr } = await exec('cd ' + envPath + ' && docker-compose build --no-cache && docker-compose down && docker-compose up -d')
-
-  logger.log('info', stdout)
-  logger.log('error', stderr)
-  spinner.succeed('Done building')
-
   if (authConfig && answers.aircloud) {
-    const spinnerSetup = ora('Setting up devops.45air.co repo...').start()
+    // const spinnerSetup = ora('Setting up devops.45air.co repo...').start()
 
     let response
     const token = await auth.get('token')
@@ -593,14 +585,47 @@ const createEnv = async function () {
     const repoSlug = response.data.path
     const userName = await auth.get('user')
     const userPat = await auth.get('token')
-
-    const { stdout, stderr } = await exec('cd ' + envPath + ' && git clone https://' + userName + ':' + userPat + '@devops.45air.co/' + repoPath + '.git')
-
-    if (!fs.existsSync(envPath + '/' + repoSlug) && stderr) {
-      log(error('Could not clone repo with credentials given'))
+    let branch = answers.environment
+    if (branch === 'stage') {
+      branch = 'master'
     }
 
-    spinnerSetup.succeed('Done setting up project')
+    // spinnerSetup.text = 'Cloning ' + repoSlug + '...'
+    const { stdout, stderr } = await exec('cd ' + envPath + ' && git clone https://' + userName + ':' + userPat + '@devops.45air.co/' + repoPath + '.git && cd ' + repoSlug + ' && git checkout -b ' + branch)
+
+    if (!fs.existsSync(envPath + '/' + repoSlug)) {
+      log(error('Could not clone repo with credentials given'))
+    } else {
+      try {
+        const authJson = {
+          'http-basic': {
+            'devops.45air.co': {
+              username: userName,
+              password: userPat
+            }
+          }
+        }
+        const file = path.join(envPath, repoSlug, 'auth.json')
+        await fs.outputJsonSync(file, authJson)
+      } catch (err) {
+        log(err)
+        logger.log('error', err)
+      }
+
+      // spinnerSetup.text = 'Running composer install on ' + branch + ' branch...'
+
+      const { stdout, stderr } = await exec('cd ' + envPath + '/' + repoSlug + ' && airlocal run composer install')
+
+      log(stderr)
+      log(stdout)
+
+      if (stderr) {
+        logger.log('error', stderr)
+        log(error('Composer install failed'))
+      }
+    }
+
+    // spinnerSetup.succeed('Done setting up project')
   }
 
   if (answers.wordpress) {

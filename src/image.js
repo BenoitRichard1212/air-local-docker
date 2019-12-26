@@ -1,7 +1,11 @@
 const chalk = require('chalk')
 const execSync = require('child_process').execSync
-const log = console.log
+const error = chalk.bold.red
+const warning = chalk.keyword('orange')
 const info = chalk.keyword('cyan')
+const success = chalk.keyword('green')
+const logger = require('./util/logger')
+const log = console.log
 
 // These have to exist, so we don't bother checking if they exist on the system first
 const globalImages = [
@@ -10,11 +14,10 @@ const globalImages = [
   'schickling/mailcatcher'
 ]
 const images = [
-  'gcr.io/air-cloud-public/wordpress:latest',
-  'gcr.io/air-cloud-public/wordpress:7.3-nginx-fpm-dev',
-  '45air/phpfpm:7.2',
-  '45air/phpfpm:7.1',
-  '45air/phpfpm:7.0',
+  'quay.io/45air/wordpress:7.3-nginx-fpm',
+  'quay.io/45air/wordpress:7.2-nginx-fpm',
+  'quay.io/45air/wordpress:7.1-nginx-fpm',
+  'quay.io/45air/wordpress:7.0-nginx-fpm',
   'redis'
 ]
 
@@ -37,18 +40,26 @@ function help () {
 
 function update (image) {
   try {
-    execSync(`docker pull ${image}`, { stdio: 'inherit' })
-  } catch (ex) {}
+    execSync(`docker image rm -f ${image}`, { stdio: 'inherit' })
+  } catch (err) {
+    logger.log('error', err)
+    log(error('Error removing ' + image))
+  }
 
-  log()
+  try {
+    execSync(`docker pull ${image}`, { stdio: 'inherit' })
+  } catch (err) {
+    logger.log('error', err)
+    log(error('Error pulling ' + image))
+  }
 }
 
 function updateIfUsed (image) {
-  log(`Testing ${image}`)
+  log(info(`Testing ${image}`))
   const result = execSync(`docker image ls ${image}`).toString()
   // All images say how long "ago" they were created.. Use this to determine if the image exists, since `wc -l` doesn't work on windows
   if (result.indexOf('ago') === -1) {
-    log(`${image} doesn't exist on this system. Skipping update.`)
+    log(info(`${image} doesn't exist on this system. Skipping update.`))
     return
   }
 
@@ -56,7 +67,18 @@ function updateIfUsed (image) {
 }
 
 function updateAll () {
+  log(info('Stopping all Docker images before forcing image updates'))
+
+  try {
+    execSync('docker stop $(docker ps -a -q)', { stdio: 'inherit' })
+  } catch (err) {
+    logger.log('error', err)
+    log(error('Error stopping AirLocal containers'))
+  }
+
+  log(info('Updating global AirLocal Docker images'))
   globalImages.map(update)
+  log(info('Updating other AirLocal Docker images that exist on the system'))
   images.map(updateIfUsed)
 }
 
