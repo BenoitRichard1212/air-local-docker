@@ -284,7 +284,7 @@ const writeHosts = function (cmd, hosts, options) {
         resolve()
       }
       if (stderr) {
-        logger.log('error', error)
+        logger.log('error', stderr)
         log(error('Error failed to write to hosts file'))
         log(
           warning('Add "127.0.0.1 ' + hosts + '" to your hosts file manually')
@@ -315,7 +315,7 @@ const removeHosts = function (cmd, hosts, options) {
         resolve()
       }
       if (stderr) {
-        logger.log('error', error)
+        logger.log('error', stderr)
         log(error('Error failed to write to hosts file'))
         log(
           warning(
