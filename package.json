@@ -1,6 +1,6 @@
 {
   "name": "@45air/air-local-docker",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "description": "Local docker development environment setup and provisioning CLI",
   "license": "MIT",
   "author": "Reilly <r.lowery@45press.com>",
@@ -10,13 +10,7 @@
     "type": "git",
     "url": "https://github.com/45air/air-local-docker.git"
   },
-  "keywords": [
-    "cli",
-    "airlocal",
-    "45air",
-    "45press",
-    "local"
-  ],
+  "keywords": ["cli", "airlocal", "45air", "45press", "local"],
   "main": "airlocal",
   "scripts": {
     "test": "ava --verbose",
@@ -29,12 +23,7 @@
     "airlocal": "airlocal",
     "airlocal-hosts": "airlocal-hosts"
   },
-  "files": [
-    "global/",
-    "src/",
-    "build/",
-    "LICENSE"
-  ],
+  "files": ["global/", "src/", "build/", "LICENSE"],
   "dependencies": {
     "@sindresorhus/slugify": "^0.9.1",
     "asyncro": "^3.0.0",
@@ -78,10 +67,7 @@
     "standard": "^14.3.1"
   },
   "ava": {
-    "files": [
-      "./tests/*.test.js",
-      "./tests/**/*.test.js"
-    ],
+    "files": ["./tests/*.test.js", "./tests/**/*.test.js"],
     "sources": [
       "./airlocal",
       "./airlocal-hosts",
