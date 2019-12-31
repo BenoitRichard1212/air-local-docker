@@ -3,7 +3,6 @@ const path = require('path')
 const fs = require('fs-extra')
 const yaml = require('node-yaml')
 const inquirer = require('inquirer')
-const sudo = require('sudo-prompt')
 const database = require('./database')
 const gateway = require('./gateway')
 const environment = require('./environment')
@@ -11,20 +10,12 @@ const snapshots = require('./snapshots')
 const wordpress = require('./wordpress')
 const auth = require('./auth')
 const config = require('./configure')
-const ora = require('ora')
-const util = require('util')
-const exec = util.promisify(require('child_process').exec)
 const execSync = require('child_process').execSync
 const helpers = require('./util/helpers')
 const utils = require('./util/utilities')
 const pkg = require('../package.json')
 const axios = require('axios')
-const {
-  srcPath,
-  cacheVolume,
-  globalPath,
-  rootPath
-} = require('./util/variables')
+const { srcPath, globalPath, rootPath } = require('./util/variables')
 
 const log = console.log
 const logger = require('./util/logger')
@@ -58,11 +49,6 @@ const createEnv = async function () {
 
   var volumeConfig = {
     volumes: {}
-  }
-  volumeConfig.volumes[cacheVolume] = {
-    external: {
-      name: `${cacheVolume}`
-    }
   }
 
   const questions = [
@@ -418,6 +404,16 @@ const createEnv = async function () {
 
   await fs.copy(path.join(srcPath, 'config'), path.join(envPath, 'config'))
 
+  // Write AirLocal site configuration file
+  log(info('Writing AirLocal site configuration file'))
+  const envConfig = {
+    envHosts: allHosts,
+    version: pkg.version,
+    aircloud: answers.aircloud
+  }
+  await fs.writeJson(path.join(envPath, '.config.json'), envConfig)
+  log(success('Site configuration file .config.json created'))
+
   // Media proxy is selected
   if (answers.mediaProxy === true) {
     // Write the proxy to the config files
@@ -472,19 +468,24 @@ const createEnv = async function () {
     const hostsstring = allHosts.join(' ')
     const hostsCmd = path.join(rootPath, 'airlocal-hosts')
     try {
-      await writeHosts(hostsCmd, hostsstring, sudoOptions)
+      await utils.writeHosts(hostsCmd, hostsstring, sudoOptions)
     } catch (err) {}
   }
 
-  // Write AirLocal site configuration file
-  log(info('Writing AirLocal site configuration file'))
-  const envConfig = {
-    envHosts: allHosts,
-    version: pkg.version,
-    aircloud: answers.aircloud
+  // Create DB
+  log(info('Creating database'))
+  try {
+    await database.create(envSlug)
+    await database.assignPrivs(envSlug)
+  } catch (err) {
+    logger.log('error', err)
+    log(error('Error creating DB'))
+    process.exit(1)
   }
-  await fs.writeJson(path.join(envPath, '.config.json'), envConfig)
-  log(success('Site configuration file .config.json created'))
+  log(success('Successfully created DB ' + envSlug))
+
+  const wpCliCache = path.join(config.getConfigDirectory(), 'cache', 'wp-cli')
+  await fs.ensureDir(wpCliCache)
 
   // Run this if authentication is configured
   // and user is setting up an AirCloud site
@@ -603,7 +604,8 @@ const createEnv = async function () {
         './config/nginx/fastcgi.d/read_timeout:/etc/nginx/fastcgi.d/read_timeout',
         './config/nginx/global/logs-off.conf:/etc/nginx/global/logs-off.conf',
         './config/nginx/global/media-proxy.conf:/etc/nginx/global/media-proxy.conf',
-        `${cacheVolume}/wp-cli/cache:/var/www/.wp-cli/cache`,
+        `${wpCliCache}:/var/www/.wp-cli/cache`,
+        './config/wp-cli.local.yml:/var/www/wp-cli.yml',
         '~/.ssh:/home/docker/.ssh',
         `${ssDir}:/var/www/.snapshots`,
         `./${repoSlug}/web/wp-config.php:/var/www/web/wp-config.php`,
@@ -628,9 +630,6 @@ const createEnv = async function () {
     baseConfig.services.phpfpm.environment.VIRTUAL_HOST = allHosts
       .concat(starHosts)
       .join(',')
-    baseConfig.services.phpfpm.volumes.push(
-      './config/wp-cli.local.yml:/var/www/wp-cli.yml'
-    )
 
     const dockerCompose = Object.assign(baseConfig, networkConfig, volumeConfig)
     try {
@@ -645,24 +644,6 @@ const createEnv = async function () {
     // Start environment
     log(info('Fire up the ' + envSlug + ' environment'))
     await environment.start(envSlug)
-
-    // Create DB
-    log(info('Creating database'))
-    try {
-      const ttyFlag = process.stdin.isTTY ? '' : '-T '
-      execSync(`docker-compose exec ${ttyFlag}phpfpm wp db create`, {
-        stdio: 'inherit',
-        cwd: envPath
-      })
-    } catch (err) {
-      logger.log('error', err)
-      log(
-        error('Error creating DB with WP CLI command ') +
-          warning('wp db create')
-      )
-      process.exit(1)
-    }
-    log(success('Successfully created DB ' + envSlug))
   } // END authenticated and AirCloud site section
 
   // Run this section if user is setting up WP with AirLocal
@@ -689,7 +670,8 @@ const createEnv = async function () {
         './config/nginx/fastcgi.d/read_timeout:/etc/nginx/fastcgi.d/read_timeout',
         './config/nginx/global/logs-off.conf:/etc/nginx/global/logs-off.conf',
         './config/nginx/global/media-proxy.conf:/etc/nginx/global/media-proxy.conf',
-        `${cacheVolume}/wp-cli/cache:/var/www/.wp-cli/cache`,
+        `${wpCliCache}:/var/www/.wp-cli/cache`,
+        './config/wp-cli.local.yml:/var/www/wp-cli.yml',
         '~/.ssh:/home/docker/.ssh',
         `${ssDir}:/var/www/.snapshots`
       ],
@@ -707,11 +689,6 @@ const createEnv = async function () {
     }
 
     await wordpress.configure(envSlug)
-
-    // Create database
-    log(info('Creating database'))
-    await database.create(envSlug)
-    await database.assignPrivs(envSlug)
 
     await wordpress.install(envSlug, envHost, answers)
 
@@ -772,35 +749,6 @@ const createProxyConfig = (proxy, curConfig) => {
   })
 
   return curConfig.replace(curConfig, newConfig)
-}
-
-function writeHosts (cmd, hosts, options) {
-  return new Promise(resolve => {
-    sudo.exec(cmd + ' add ' + hosts, options, function (error, stdout, stderr) {
-      if (error) {
-        logger.log('error', error)
-        log(error('Error failed to write to hosts file'))
-        log(
-          warning(
-            'Add "127.0.0.1 ' + hostsstring + '" to your hosts file manually'
-          )
-        )
-        resolve()
-      }
-      if (stderr) {
-        logger.log('error', error)
-        log(error('Error failed to write to hosts file'))
-        log(
-          warning(
-            'Add "127.0.0.1 ' + hostsstring + '" to your hosts file manually'
-          )
-        )
-        resolve()
-      }
-      log(success('Added ' + hosts + ' to hosts file'))
-      resolve()
-    })
-  })
 }
 
 const command = async function () {

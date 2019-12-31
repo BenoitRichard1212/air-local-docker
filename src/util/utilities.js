@@ -2,13 +2,18 @@ const path = require('path')
 const os = require('os')
 const fs = require('fs-extra')
 const execSync = require('child_process').execSync
+const sudo = require('sudo-prompt')
 const slugify = require('@sindresorhus/slugify')
 const async = require('asyncro')
 const inquirer = require('inquirer')
 const chalk = require('chalk')
 const helper = require('./helpers')
-const log = console.log
 const error = chalk.bold.red
+const warning = chalk.keyword('orange')
+const info = chalk.keyword('cyan')
+const success = chalk.keyword('green')
+const logger = require('./logger')
+const log = console.log
 
 /**
  * Resolve the path to users home directory
@@ -267,6 +272,64 @@ const createDefaultProxy = function (value) {
   return proxyUrl
 }
 
+const writeHosts = function (cmd, hosts, options) {
+  return new Promise(resolve => {
+    sudo.exec(cmd + ' add ' + hosts, options, function (error, stdout, stderr) {
+      if (error) {
+        logger.log('error', error)
+        log(error('Error failed to write to hosts file'))
+        log(
+          warning('Add "127.0.0.1 ' + hosts + '" to your hosts file manually')
+        )
+        resolve()
+      }
+      if (stderr) {
+        logger.log('error', error)
+        log(error('Error failed to write to hosts file'))
+        log(
+          warning('Add "127.0.0.1 ' + hosts + '" to your hosts file manually')
+        )
+        resolve()
+      }
+      log(success('Added ' + hosts + ' to hosts file'))
+      resolve()
+    })
+  })
+}
+
+const removeHosts = function (cmd, hosts, options) {
+  return new Promise(resolve => {
+    sudo.exec(cmd + ' remove ' + hosts, options, function (
+      error,
+      stdout,
+      stderr
+    ) {
+      if (error) {
+        logger.log('error', error)
+        log(error('Error failed to write to hosts file'))
+        log(
+          warning(
+            'Remove "127.0.0.1 ' + hosts + '" to your hosts file manually'
+          )
+        )
+        resolve()
+      }
+      if (stderr) {
+        logger.log('error', error)
+        log(error('Error failed to write to hosts file'))
+        log(
+          warning(
+            'Remove "127.0.0.1 ' + hosts + '" to your hosts file manually'
+          )
+        )
+        resolve()
+      }
+      log(success('Removed ' + hosts + ' from hosts file'))
+      resolve()
+    })
+  })
+}
+
 module.exports = {
   checkIfDockerRunning,
   envPath,
@@ -288,5 +351,7 @@ module.exports = {
   parseOrPromptEnv,
   getEnvHosts,
   getPathOrError,
-  createDefaultProxy
+  createDefaultProxy,
+  writeHosts,
+  removeHosts
 }

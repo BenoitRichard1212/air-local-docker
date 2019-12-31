@@ -1,66 +1,77 @@
 const mysql = require('mysql')
 
-const getConnection = async function () {
-  const connection = mysql.createConnection({
-    host: '127.0.0.1',
-    user: 'root',
-    password: 'password'
-  })
+const create = function (dbname) {
+  return new Promise((resolve, reject) => {
+    const connection = mysql.createConnection({
+      user: 'root',
+      password: 'password'
+    })
 
-  return connection
-}
+    connection.connect(function (err) {
+      if (err) {
+        reject(err)
+      }
+    })
 
-const create = async function (dbname) {
-  const connection = await getConnection()
-
-  await new Promise((resolve, reject) => {
     connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbname}\`;`, function (
       err,
       results
     ) {
       connection.destroy()
-
       if (err) {
-        reject(Error(err))
+        reject(err)
       }
-
       resolve()
     })
   })
 }
 
-const deleteDatabase = async function (dbname) {
-  const connection = getConnection()
+const deleteDatabase = function (dbname) {
+  return new Promise((resolve, reject) => {
+    const connection = mysql.createConnection({
+      user: 'root',
+      password: 'password'
+    })
 
-  await new Promise((resolve, reject) => {
+    connection.connect(function (err) {
+      if (err) {
+        reject(err)
+      }
+    })
+
     connection.query(`DROP DATABASE IF EXISTS \`${dbname}\`;`, function (
       err,
       results
     ) {
       connection.destroy()
-
       if (err) {
-        reject(Error(err))
+        reject(err)
       }
-
       resolve()
     })
   })
 }
 
-const assignPrivs = async function (dbname) {
-  const connection = getConnection()
+const assignPrivs = function (dbname) {
+  return new Promise((resolve, reject) => {
+    const connection = mysql.createConnection({
+      user: 'root',
+      password: 'password'
+    })
 
-  await new Promise((resolve, reject) => {
+    connection.connect(function (err) {
+      if (err) {
+        reject(err)
+      }
+    })
+
     connection.query(
-      `GRANT ALL PRIVILEGES ON \`${dbname}\`.* TO 'wordpress'@'%' IDENTIFIED BY 'password';`,
+      `GRANT ALL PRIVILEGES ON \`${dbname}\`.* TO 'root'@'%' IDENTIFIED BY 'password';`,
       function (err, results) {
         connection.destroy()
-
         if (err) {
-          reject(Error(err))
+          reject(err)
         }
-
         resolve()
       }
     )

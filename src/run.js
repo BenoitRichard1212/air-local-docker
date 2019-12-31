@@ -1,8 +1,10 @@
 const path = require('path')
 const os = require('os')
 const chalk = require('chalk')
+const fs = require('fs-extra')
+const config = require('./configure')
 const execSync = require('child_process').execSync
-const { rootPath, cacheVolume } = require('./util/variables')
+const { rootPath } = require('./util/variables')
 
 const error = chalk.bold.red
 const warning = chalk.keyword('orange')
@@ -28,9 +30,11 @@ const composer = async function (command) {
 
   const userInfo = os.userInfo()
 
+  const composerCache = await composerCacheDir()
+
   try {
     execSync(
-      `docker run --rm --interactive --tty --volume $PWD:/app --volume ${cacheVolume}/composer/cache:/home/docker/.composer/cache --entrypoint="" --user=${userInfo.uid}:${userInfo.gid} airlocal-run:phplatest-node10 composer ${command}`,
+      `docker run --rm --interactive --tty --volume $PWD:/app --volume ${composerCache}:/home/docker/.composer/cache --entrypoint="" --user=${userInfo.uid}:${userInfo.gid} airlocal-run:phplatest-node10 composer ${command}`,
       { stdio: 'inherit' }
     )
   } catch (err) {
@@ -60,12 +64,22 @@ const gulp = async function (command) {
 
   try {
     execSync(
-      `docker run --rm --interactive --tty --volume $PWD:/app --entrypoint="" --user=${userInfo.uid}:${userInfo.gid} airlocal-run:phplatest-node10 gulp ${command}`,
+      `docker run --rm --interactive --tty --volume $PWD:/app --entrypoint="" --user=${userInfo.uid}:${userInfo.gid} airlocal-run:phplatest-node10 npm run gulp`,
       { stdio: 'inherit' }
     )
   } catch (err) {
     logger.log('error', err)
   }
+}
+
+const composerCacheDir = async function () {
+  const composerCache = path.join(
+    config.getConfigDirectory(),
+    'cache',
+    'composer'
+  )
+  await fs.ensureDir(composerCache)
+  return composerCache
 }
 
 const buildRunImg = async function () {
@@ -86,4 +100,4 @@ const buildRunImg = async function () {
   }
 }
 
-module.exports = { help, composer, npm, gulp }
+module.exports = { help, composer, npm, gulp, composerCacheDir }

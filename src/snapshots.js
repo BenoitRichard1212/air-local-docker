@@ -92,7 +92,7 @@ async function load (file) {
     const envSlug = await envUtils.parseOrPromptEnv()
     const envPath = await utils.envPath(envSlug)
 
-    // Check if the container is running, otherwise, start up the stacks
+    log(info('Starting env at ' + envPath))
     try {
       execSync('airlocal start', { cwd: envPath })
     } catch (err) {
@@ -100,9 +100,11 @@ async function load (file) {
       log(error('Error starting site'))
       process.exit(1)
     }
+    log(success('Environment started'))
 
+    log(info('Importing DB ' + file))
     try {
-      execSync(`airlocal wp "db import .snapshots/${file}"`, {
+      execSync(`airlocal wp db import .snapshots/${file}`, {
         stdio: 'inherit',
         cwd: envPath
       })
@@ -111,9 +113,7 @@ async function load (file) {
       log(error('Error importing database'))
       process.exit(1)
     }
-
     log(success('Database imported'))
-    process.exit(0)
   })
 }
 

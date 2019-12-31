@@ -241,42 +241,18 @@ const deleteEnv = async function (env) {
   }
 
   if ((await config.get('manageHosts')) === true) {
+    log(info('Removing host file entries'))
     try {
-      log(info('Removing host file entries'))
-
       const sudoOptions = {
-        name: 'AIRLOCAL'
+        name: 'AirLocal'
       }
-
+      const hostsCmd = path.join(rootPath, 'airlocal-hosts')
       const envHosts = await envUtil.getEnvHosts(envPath)
-      for (let i = 0, len = envHosts.length; i < len; i++) {
-        await new Promise(resolve => {
-          log(` - Removing ${envHosts}`)
-          const hostsCmd = path.join(rootPath, 'airlocal-hosts')
-          sudo.exec(hostsCmd + ` remove ${envHosts}`, sudoOptions, function (
-            error,
-            stdout,
-            stderr
-          ) {
-            if (error) {
-              log(
-                error(
-                  'Something went wrong deleting host file entries. There may still be remnants in /etc/hosts'
-                )
-              )
-              resolve()
-              return
-            }
-            log(success(stdout))
-            resolve()
-          })
-        })
-      }
+      await utils.removeHosts(hostsCmd, envHosts, sudoOptions)
     } catch (err) {
-      // Unfound config, etc
       log(
         error(
-          'Something went wrong deleting host file entries. There may still be remnants in /etc/hosts'
+          'Error deleting host file entries. There may still be remnants in /etc/hosts'
         )
       )
     }

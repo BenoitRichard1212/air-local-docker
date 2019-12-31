@@ -1,7 +1,7 @@
 const chalk = require('chalk')
 const execSync = require('child_process').execSync
 const exec = require('child_process').exec
-const { globalPath, cacheVolume } = require('./util/variables')
+const { globalPath } = require('./util/variables')
 const error = chalk.bold.red
 const warning = chalk.keyword('orange')
 const info = chalk.keyword('cyan')
@@ -36,37 +36,6 @@ const removeNetwork = function () {
     log(info('Removing Global Network'))
     execSync('docker network rm airlocaldocker')
   } catch (ex) {}
-}
-
-const ensureCacheExists = async function () {
-  try {
-    log(info('Ensuring global cache volume exists'))
-    const volumes = await exec(
-      `docker volume ls --filter name=${cacheVolume}`
-    ).toString()
-    if (volumes.indexOf(`${cacheVolume}`) !== -1) {
-      log(info(' - Volume Exists'))
-      return
-    }
-
-    log(info(' - Creating Volume'))
-    await exec(`docker volume create ${cacheVolume}`)
-  } catch (ex) {}
-}
-
-const removeCacheVolume = async function () {
-  try {
-    log(info('Removing cache volume'))
-    const volumes = await exec(
-      `docker volume ls --filter name=${cacheVolume}`
-    ).toString()
-    if (volumes.indexOf(`${cacheVolume}`) === -1) {
-      await exec(`docker volume rm ${cacheVolume}`)
-      log(info(' - Volume Removed'))
-    }
-  } catch (err) {
-    logger.log('error', err)
-  }
 }
 
 const occurrences = function (string, subString, allowOverlapping) {
@@ -164,7 +133,6 @@ const startGlobal = async function () {
   }
 
   ensureNetworkExists()
-  await ensureCacheExists()
   await startGateway()
 
   started = true
@@ -187,7 +155,5 @@ const restartGlobal = function () {
 module.exports = {
   startGlobal,
   stopGlobal,
-  restartGlobal,
-  removeCacheVolume,
-  ensureCacheExists
+  restartGlobal
 }
