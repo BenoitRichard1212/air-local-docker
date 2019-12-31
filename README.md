@@ -43,7 +43,7 @@ If you would like to customize the environment path or opt to not have AirLocal 
 
 ## Updating
 
-To update Air Local Docker, run `npm update @45air/air-local-docker`
+To update AirLocal, run `npm update @45air/air-local-docker`
 
 ## Command Documentation
 
@@ -51,13 +51,13 @@ To update Air Local Docker, run `npm update @45air/air-local-docker`
 
 #### Clearing Shared Cache
 
-WP CLI, Air DB Snapshots, and npm (when building the development version of WordPress) all utilize cache to speed up operations and save on bandwidth in the future.
+WP CLI, Composer, and npm all utilize cache to speed up operations and save on bandwidth in the future.
 
-`airlocal cache clear` Clears the WP CLI, Air DB Snapshots, and npm (for WordPress core development) caches.
+`airlocal cache clear` Clears the WP CLI, composer, and npm caches.
 
 #### Updating Docker Images
 
-`airlocal image update` Will determine which of the docker images utilized by Air Local Docker are present on your system and update them to the latest version available.
+`airlocal image update all` Will determine which of the docker images utilized by Air Local Docker are present on your system and update them to the latest version available.
 
 #### Stopping global services
 
@@ -97,13 +97,12 @@ A special hostname `all` is available that will restart all environments as well
 
 #### Running WP CLI Commands
 
-Running WP CLI commands against an environment is easy. First, make sure you are somewhere within your environment directory (by default, this is somewhere within `~/air-local-docker-sites/<environment>/`). Once within the environment directory, simply run `airlocal wp "<command>"`. `<command>` can be any valid command you would otherwise pass directly to WP CLI.
-**NOTE: Make sure to wrap the command in quotes or else it will fail**.
+Running WP CLI commands against an environment is easy. First, make sure you are somewhere within your environment directory (by default, this is somewhere within `~/air-local-docker-sites/<environment>/`). Once within the environment directory, simply run `airlocal wp <command>`. `<command>` can be any valid command you would otherwise pass directly to WP CLI.
 
 Examples:
 
-- `airlocal wp "search-replace 'mysite.com' 'mysite.test'"`
-- `airlocal wp "site list"`
+- `airlocal wp search-replace mysite.com mysite.test`
+- `airlocal wp site list`
 
 #### Shell
 
@@ -111,7 +110,6 @@ You can get a shell inside of any container in your environment using the `airlo
 
 - `phpfpm`
 - `nginx`
-- `elasticsearch`
 - `redis`
 
 #### Logs
@@ -120,7 +118,6 @@ Real time container logs are available using the `airlocal logs [<service>]` com
 
 - `phpfpm`
 - `nginx`
-- `elasticsearch`
 - `redis`
 
 ### Tools
@@ -131,7 +128,7 @@ Real time container logs are available using the `airlocal logs [<service>]` com
 
 Access phpMyAdmin by navigating to [http://localhost:8092](http://localhost:8092).
 
-- Username: `wordpress`
+- Username: `root`
 - Password: `password`
 
 #### MailCatcher
@@ -142,13 +139,13 @@ Access MailCatcher by navigating to [http://localhost:1080](http://localhost:108
 
 #### Xdebug
 
-Xdebug is included in the php images and is nearly ready to go out of the box. Make sure your IDE is listening for PHP debug connections and set up a path mapping to your local environment's `wordpress/` directory to `/var/www/web/` in the container.
+Xdebug is included in the php images and is nearly ready to go out of the box. Make sure your IDE is listening for PHP debug connections and set up a path mapping to your local environment's `web/wp-content/` directory to `/var/www/web/wp-content/` in the container.
 
 ##### Visual Studio Code
 
 1. Install the [PHP Debug](https://marketplace.visualstudio.com/items?itemName=felixfbecker.php-debug) extension.
 2. In your project, go to the Debug view, click "Add Configuration..." and choose PHP environment. A new launch configuration will be created for you.
-3. Set the `pathMappings` parameter to your local `wordpress` directory. Example:
+3. Set the `pathMappings` parameter to your local `web/wp-content/` directory. Example:
 
 ```json
 "configurations": [
@@ -158,7 +155,7 @@ Xdebug is included in the php images and is nearly ready to go out of the box. M
             "request": "launch",
             "port": 9000,
             "pathMappings": {
-                "/var/www/web": "${workspaceFolder}/wordpress",
+                "/var/www/web/wp-content": "${workspaceFolder}/web/wp-content",
             }
         }
 ]

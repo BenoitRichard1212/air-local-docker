@@ -2,7 +2,7 @@ const path = require('path')
 const os = require('os')
 const chalk = require('chalk')
 const execSync = require('child_process').execSync
-const { rootPath } = require('./util/variables')
+const { rootPath, cacheVolume } = require('./util/variables')
 
 const error = chalk.bold.red
 const warning = chalk.keyword('orange')
@@ -30,12 +30,7 @@ const composer = async function (command) {
 
   try {
     execSync(
-      'docker run --rm --interactive --tty --volume $PWD:/app  --entrypoint="" --user=' +
-        userInfo.uid +
-        ':' +
-        userInfo.gid +
-        ' airlocal-run:phplatest-node10 composer ' +
-        command,
+      `docker run --rm --interactive --tty --volume $PWD:/app --volume ${cacheVolume}/composer/cache:/home/docker/.composer/cache --entrypoint="" --user=${userInfo.uid}:${userInfo.gid} airlocal-run:phplatest-node10 composer ${command}`,
       { stdio: 'inherit' }
     )
   } catch (err) {
@@ -50,12 +45,7 @@ const npm = async function (command) {
 
   try {
     execSync(
-      'docker run --rm --interactive --tty --volume $PWD:/app --entrypoint="" --user=' +
-        userInfo.uid +
-        ':' +
-        userInfo.gid +
-        ' airlocal-run:phplatest-node10 npm ' +
-        command,
+      `docker run --rm --interactive --tty --volume $PWD:/app --entrypoint="" --user=${userInfo.uid}:${userInfo.gid} airlocal-run:phplatest-node10 npm ${command}`,
       { stdio: 'inherit' }
     )
   } catch (err) {
@@ -70,12 +60,7 @@ const gulp = async function (command) {
 
   try {
     execSync(
-      'docker run --rm --interactive --tty --volume $PWD:/app --entrypoint="" --user=' +
-        userInfo.uid +
-        ':' +
-        userInfo.gid +
-        ' airlocal-run:phplatest-node10 gulp ' +
-        command,
+      `docker run --rm --interactive --tty --volume $PWD:/app --entrypoint="" --user=${userInfo.uid}:${userInfo.gid} airlocal-run:phplatest-node10 gulp ${command}`,
       { stdio: 'inherit' }
     )
   } catch (err) {

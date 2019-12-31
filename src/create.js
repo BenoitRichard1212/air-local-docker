@@ -1,7 +1,7 @@
 const chalk = require('chalk')
 const path = require('path')
 const fs = require('fs-extra')
-const yaml = require('write-yaml')
+const yaml = require('node-yaml')
 const inquirer = require('inquirer')
 const sudo = require('sudo-prompt')
 const database = require('./database')
@@ -106,7 +106,7 @@ const createEnv = async function () {
       name: 'mediaProxy',
       type: 'confirm',
       message:
-        'Do you want to set a proxy for media assets? (i.e. Serving /uploads/ directory assets from a production site)',
+        'Do you want to set a proxy for media assets? (i.e. Serving /wp-content/uploads/ directory assets from a production or development site)',
       default: false
     },
     {
@@ -267,7 +267,7 @@ const createEnv = async function () {
       name: 'mediaProxy',
       type: 'confirm',
       message:
-        'Do you want to set a proxy for media assets? (i.e. Serving /uploads/ directory assets from a production site)',
+        'Do you want to set a proxy for media assets? (i.e. Serving /wp-content/uploads/ directory assets from a production or development site)',
       default: false
     },
     {
@@ -373,7 +373,7 @@ const createEnv = async function () {
     answers = await inquirer.prompt(questions)
   }
 
-  // Folder name inside of /sites/ for this site
+  // Folder name inside of /air-local-docker-sites/ for this site
   const envHost = answers.hostname
   const envSlug = utils.envSlug(envHost)
   const envPath = await utils.envPath(envHost)
@@ -412,8 +412,6 @@ const createEnv = async function () {
   allHosts.forEach(function (host) {
     starHosts.push(`*.${host}`)
   })
-
-  const ssDir = await snapshots.getSnapshotsDir()
 
   // Create webroot/config
   log(info('Copying required files'))
@@ -465,65 +463,49 @@ const createEnv = async function () {
     })
   }
 
+  // Write to hosts file if user has configured it
   if ((await config.get('manageHosts')) === true) {
     log(info('Adding entry to hosts file'))
     const sudoOptions = {
-      name: 'AIRLocal'
+      name: 'AirLocal'
     }
-    await new Promise(resolve => {
-      const hostsstring = allHosts.join(' ')
-      const hostsCmd = path.join(rootPath, 'airlocal-hosts')
-      sudo.exec(hostsCmd + ' add ' + hostsstring, sudoOptions, function (
-        error,
-        stdout,
-        stderr
-      ) {
-        if (error) {
-          logger.log('error', error)
-          log(
-            warning(
-              'Add "127.0.0.1 ' + hostsstring + '" to your hosts file manually'
-            )
-          )
-          resolve()
-        }
-
-        log(success('Added ' + hostsstring + ' to hosts file'))
-        resolve()
-      })
-    })
+    const hostsstring = allHosts.join(' ')
+    const hostsCmd = path.join(rootPath, 'airlocal-hosts')
+    try {
+      await writeHosts(hostsCmd, hostsstring, sudoOptions)
+    } catch (err) {}
   }
 
-  // Track things we might need to know later in order to clean up the environment
+  // Write AirLocal site configuration file
+  log(info('Writing AirLocal site configuration file'))
   const envConfig = {
     envHosts: allHosts,
     version: pkg.version,
     aircloud: answers.aircloud
   }
   await fs.writeJson(path.join(envPath, '.config.json'), envConfig)
+  log(success('Site configuration file .config.json created'))
 
+  // Run this if authentication is configured
+  // and user is setting up an AirCloud site
   if (authConfig && answers.aircloud) {
+    // Validate project ID with Gitlab and get repo information
     let response
     const token = await auth.get('token')
-    const options = {
-      headers: { 'Private-Token': token }
-    }
-
     try {
+      const options = {
+        headers: { 'Private-Token': token }
+      }
       response = await axios.get(
         'https://devops.45air.co/api/v4/projects/' + answers.id,
         options
       )
     } catch (err) {
-      logger.log('error', err)
-
       if (err.response) {
-        // Server responded with a non 2xx response
         log(error(err.response.data.message))
         log(error('Invalid project ID'))
         process.exit(1)
       } else if (err.request) {
-        // No response received from server
         log(
           error(
             'No response from the server. Logging the error request and exiting'
@@ -531,12 +513,17 @@ const createEnv = async function () {
         )
         process.exit(1)
       }
-
-      // Something happened in setting up the request
       log(error(err.message))
       process.exit(1)
     }
+    log(
+      success(
+        'Project ID is valid for repo ' +
+          info(response.data.path_with_namespace)
+      )
+    )
 
+    // Clone git repo and checkout branch
     const repoPath = response.data.path_with_namespace
     const repoSlug = response.data.path
     const userName = await auth.get('user')
@@ -545,151 +532,186 @@ const createEnv = async function () {
     if (branch === 'stage') {
       branch = 'master'
     }
-
     try {
       execSync(
-        'git clone https://' +
-          userName +
-          ':' +
-          userPat +
-          '@devops.45air.co/' +
-          repoPath +
-          '.git && cd ' +
-          repoSlug +
-          ' && git checkout -b ' +
-          branch,
+        `git clone https://${userName}:${userPat}@devops.45air.co/${repoPath}.git`,
         { stdio: 'inherit', cwd: envPath }
       )
+      execSync(`git checkout -b ${branch}`, {
+        stdio: 'inherit',
+        cwd: envPath + '/' + repoSlug
+      })
     } catch (err) {
       logger.log('error', err)
       log(error('Error cloning repo from Gitlab'))
       process.exit(1)
     }
+    log(success('Cloned site repo ' + repoPath))
+    log(success('Checked out ' + branch + ' branch of ' + repoSlug))
 
-    if (!fs.existsSync(envPath + '/' + repoSlug)) {
-      log(error('Could not clone repo with credentials given'))
-    } else {
-      try {
-        const authJson = {
-          'http-basic': {
-            'devops.45air.co': {
-              username: userName,
-              password: userPat
-            }
+    // Generate auth.json file for composer authentication
+    log(info('Generating auth.json for composer authentication'))
+    try {
+      const authJson = {
+        'http-basic': {
+          'devops.45air.co': {
+            username: userName,
+            password: userPat
           }
         }
-        const file = path.join(envPath, repoSlug, 'auth.json')
-        await fs.outputJsonSync(file, authJson)
-      } catch (err) {
-        logger.log('error', err)
-        log(error('Could not create auth.json file'))
-        process.exit(1)
       }
+      const file = path.join(envPath, repoSlug, 'auth.json')
+      await fs.outputJsonSync(file, authJson)
+    } catch (err) {
+      logger.log('error', err)
+      log(error('Error creating auth.json file for composer'))
+      process.exit(1)
+    }
+    log(success('Successfully generated auth.json'))
 
-      try {
-        execSync('airlocal run composer install', {
-          stdio: 'inherit',
-          cwd: envPath + '/' + repoSlug
-        })
-      } catch (err) {
-        logger.log('error', err)
-        log(error('Error running composer install on the cloned repo'))
-        process.exit(1)
-      }
-
-      baseConfig.services.phpfpm = {
-        build: {
-          context: './config/build',
-          dockerfile: `Dockerfile-${answers.phpVersion}`,
-          args: [
-            'PHP_EXTENSIONS=xdebug',
-            'WORDPRESS_VERSION=5.3',
-            'NODE_VERSION=10',
-            'WP_ENV=local',
-            'TEMPLATE_PHP_INI=development'
-          ]
-        },
-        volumes: [
-          './config/php/conf.d/local.ini:/usr/local/etc/php/conf.d/local.ini',
-          './config/nginx/fastcgi.d/read_timeout:/etc/nginx/fastcgi.d/read_timeout',
-          './config/nginx/global/logs-off.conf:/etc/nginx/global/logs-off.conf',
-          './config/nginx/global/media-proxy.conf:/etc/nginx/global/media-proxy.conf',
-          `${cacheVolume}:/var/www/.wp-cli/cache`,
-          '~/.ssh:/home/docker/.ssh',
-          `${ssDir}:/var/www/.snapshots`,
-          `./${repoSlug}/web/wp-config.php:/var/www/web/wp-config.php`,
-          `./${repoSlug}/web/wp-content/mu-plugins:/var/www/web/wp-content/mu-plugins`,
-          `./${repoSlug}/web/wp-content/plugins/:/var/www/web/wp-content/plugins/`,
-          `./${repoSlug}/web/wp-content/themes/:/var/www/web/wp-content/themes/`,
-          `./${repoSlug}/config:/var/www/config`,
-          `./${repoSlug}/vendor:/var/www/vendor`
-        ],
-        depends_on: ['redis'],
-        networks: ['default', 'airlocaldocker'],
-        dns: ['10.0.0.2'],
-        environment: {
-          VIRTUAL_PORT: 80,
-          WP_CLI_CACHE_DIR: '/var/www/.wp-cli/cache',
-          DB_HOST: 'mysql',
-          DB_USER: 'root',
-          DB_PASSWORD: 'password',
-          DB_NAME: `${envSlug}`
-        }
-      }
-
-      // Additional nginx config based on selections above
-      baseConfig.services.phpfpm.environment.VIRTUAL_HOST = allHosts
-        .concat(starHosts)
-        .join(',')
-
-      baseConfig.services.phpfpm.volumes.push(
-        './config/wp-cli.local.yml:/var/www/wp-cli.yml'
-      )
-
-      // Write Docker Compose
-      log(info('Generating docker-compose.yml file'))
-      const dockerCompose = Object.assign(
-        baseConfig,
-        networkConfig,
-        volumeConfig
-      )
-      await new Promise(resolve => {
-        yaml(
-          path.join(envPath, 'docker-compose.yml'),
-          dockerCompose,
-          { lineWidth: 500 },
-          function (err) {
-            if (err) {
-              logger.log('error', err)
-              log(error(err))
-            }
-            log(success('Done generating docker-compose.yml'))
-            resolve()
-          }
-        )
+    // Run composer install on site repo
+    log(info('Running composer install on the site repo'))
+    try {
+      execSync('airlocal run composer install', {
+        stdio: 'inherit',
+        cwd: envPath + '/' + repoSlug
       })
+    } catch (err) {
+      logger.log('error', err)
+      log(error('Error running composer install on the cloned repo'))
+      process.exit(1)
+    }
+    log(success('Composer dependencies installed successfully'))
 
-      // Create database
-      log(info('Creating database'))
-      // await database.create(envSlug)
-      // await database.assignPrivs(envSlug)
+    // Generate docker-compose.yml
+    log(info('Generating docker-compose.yml file'))
+    const ssDir = await snapshots.getSnapshotsDir()
+    baseConfig.services.phpfpm = {
+      build: {
+        context: './config/build',
+        dockerfile: `Dockerfile-${answers.phpVersion}`,
+        args: [
+          'PHP_EXTENSIONS=xdebug',
+          'WORDPRESS_VERSION=5.3',
+          'NODE_VERSION=10',
+          'WP_ENV=local',
+          'TEMPLATE_PHP_INI=development'
+        ]
+      },
+      volumes: [
+        './config/php/conf.d/local.ini:/usr/local/etc/php/conf.d/local.ini',
+        './config/nginx/fastcgi.d/read_timeout:/etc/nginx/fastcgi.d/read_timeout',
+        './config/nginx/global/logs-off.conf:/etc/nginx/global/logs-off.conf',
+        './config/nginx/global/media-proxy.conf:/etc/nginx/global/media-proxy.conf',
+        `${cacheVolume}/wp-cli/cache:/var/www/.wp-cli/cache`,
+        '~/.ssh:/home/docker/.ssh',
+        `${ssDir}:/var/www/.snapshots`,
+        `./${repoSlug}/web/wp-config.php:/var/www/web/wp-config.php`,
+        `./${repoSlug}/web/wp-content/mu-plugins:/var/www/web/wp-content/mu-plugins`,
+        `./${repoSlug}/web/wp-content/plugins/:/var/www/web/wp-content/plugins/`,
+        `./${repoSlug}/web/wp-content/themes/:/var/www/web/wp-content/themes/`,
+        `./${repoSlug}/config:/var/www/config`,
+        `./${repoSlug}/vendor:/var/www/vendor`
+      ],
+      depends_on: ['redis'],
+      networks: ['default', 'airlocaldocker'],
+      dns: ['10.0.0.2'],
+      environment: {
+        VIRTUAL_PORT: 80,
+        WP_CLI_CACHE_DIR: '/var/www/.wp-cli/cache',
+        DB_HOST: 'mysql',
+        DB_USER: 'root',
+        DB_PASSWORD: 'password',
+        DB_NAME: `${envSlug}`
+      }
+    }
+    baseConfig.services.phpfpm.environment.VIRTUAL_HOST = allHosts
+      .concat(starHosts)
+      .join(',')
+    baseConfig.services.phpfpm.volumes.push(
+      './config/wp-cli.local.yml:/var/www/wp-cli.yml'
+    )
 
-      // Check for TTY
+    const dockerCompose = Object.assign(baseConfig, networkConfig, volumeConfig)
+    try {
+      yaml.writeSync(path.join(envPath, 'docker-compose.yml'), dockerCompose)
+    } catch (err) {
+      logger.log('error', err)
+      log(error('Error creating docker-compose.yml'))
+      process.exit(1)
+    }
+    log(success('Successfully generated docker-compose.yml'))
+
+    // Start environment
+    log(info('Fire up the ' + envSlug + ' environment'))
+    await environment.start(envSlug)
+
+    // Create DB
+    log(info('Creating database'))
+    try {
       const ttyFlag = process.stdin.isTTY ? '' : '-T '
-
-      await environment.start(envSlug)
-
       execSync(`docker-compose exec ${ttyFlag}phpfpm wp db create`, {
         stdio: 'inherit',
         cwd: envPath
       })
+    } catch (err) {
+      logger.log('error', err)
+      log(
+        error('Error creating DB with WP CLI command ') +
+          warning('wp db create')
+      )
+      process.exit(1)
     }
-  }
+    log(success('Successfully created DB ' + envSlug))
+  } // END authenticated and AirCloud site section
 
+  // Run this section if user is setting up WP with AirLocal
+  // not using AirCloud site
   if (answers.wordpress) {
-    await wordpress.download(envSlug)
+    await environment.start(envSlug)
+
+    const ssDir = await snapshots.getSnapshotsDir()
+
+    baseConfig.services.phpfpm = {
+      build: {
+        context: './config/build',
+        dockerfile: `Dockerfile-${answers.phpVersion}`,
+        args: [
+          'PHP_EXTENSIONS=xdebug',
+          'WORDPRESS_VERSION=5.3',
+          'NODE_VERSION=10',
+          'WP_ENV=local',
+          'TEMPLATE_PHP_INI=development'
+        ]
+      },
+      volumes: [
+        './config/php/conf.d/local.ini:/usr/local/etc/php/conf.d/local.ini',
+        './config/nginx/fastcgi.d/read_timeout:/etc/nginx/fastcgi.d/read_timeout',
+        './config/nginx/global/logs-off.conf:/etc/nginx/global/logs-off.conf',
+        './config/nginx/global/media-proxy.conf:/etc/nginx/global/media-proxy.conf',
+        `${cacheVolume}/wp-cli/cache:/var/www/.wp-cli/cache`,
+        '~/.ssh:/home/docker/.ssh',
+        `${ssDir}:/var/www/.snapshots`
+      ],
+      depends_on: ['redis'],
+      networks: ['default', 'airlocaldocker'],
+      dns: ['10.0.0.2'],
+      environment: {
+        VIRTUAL_PORT: 80,
+        WP_CLI_CACHE_DIR: '/var/www/.wp-cli/cache',
+        DB_HOST: 'mysql',
+        DB_USER: 'root',
+        DB_PASSWORD: 'password',
+        DB_NAME: `${envSlug}`
+      }
+    }
 
     await wordpress.configure(envSlug)
+
+    // Create database
+    log(info('Creating database'))
+    await database.create(envSlug)
+    await database.assignPrivs(envSlug)
 
     await wordpress.install(envSlug, envHost, answers)
 
@@ -750,6 +772,35 @@ const createProxyConfig = (proxy, curConfig) => {
   })
 
   return curConfig.replace(curConfig, newConfig)
+}
+
+function writeHosts (cmd, hosts, options) {
+  return new Promise(resolve => {
+    sudo.exec(cmd + ' add ' + hosts, options, function (error, stdout, stderr) {
+      if (error) {
+        logger.log('error', error)
+        log(error('Error failed to write to hosts file'))
+        log(
+          warning(
+            'Add "127.0.0.1 ' + hostsstring + '" to your hosts file manually'
+          )
+        )
+        resolve()
+      }
+      if (stderr) {
+        logger.log('error', error)
+        log(error('Error failed to write to hosts file'))
+        log(
+          warning(
+            'Add "127.0.0.1 ' + hostsstring + '" to your hosts file manually'
+          )
+        )
+        resolve()
+      }
+      log(success('Added ' + hosts + ' to hosts file'))
+      resolve()
+    })
+  })
 }
 
 const command = async function () {
