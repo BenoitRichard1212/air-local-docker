@@ -29,14 +29,22 @@ const composer = async function (command) {
   await buildRunImg()
 
   const userInfo = os.userInfo()
+  const osType = os.type()
 
   const composerCache = await composerCacheDir()
 
   try {
-    execSync(
-      `docker run --rm --interactive --tty --volume $PWD:/app --volume ${composerCache}:/home/docker/.composer/cache --entrypoint="" --user=${userInfo.uid}:${userInfo.gid} airlocal-run:phplatest-node10 composer ${command}`,
-      { stdio: 'inherit' }
-    )
+    if (osType === 'Darwin') {
+      execSync(
+        `docker run --rm --interactive --tty --volume $PWD:/app --volume ${composerCache}:/home/docker/.composer/cache --entrypoint="" airlocal-run:phplatest-node10 composer ${command}`,
+        { stdio: 'inherit' }
+      )
+    } else {
+      execSync(
+        `docker run --rm --interactive --tty --volume $PWD:/app --volume ${composerCache}:/home/docker/.composer/cache --entrypoint="" --user=${userInfo.uid}:${userInfo.gid} airlocal-run:phplatest-node10 composer ${command}`,
+        { stdio: 'inherit' }
+      )
+    }
   } catch (err) {
     logger.log('error', err)
   }
@@ -46,12 +54,20 @@ const npm = async function (command) {
   await buildRunImg()
 
   const userInfo = os.userInfo()
+  const osType = os.type()
 
   try {
-    execSync(
-      `docker run --rm --interactive --tty --volume $PWD:/app --entrypoint="" --user=${userInfo.uid}:${userInfo.gid} airlocal-run:phplatest-node10 npm ${command}`,
-      { stdio: 'inherit' }
-    )
+    if (osType === 'Darwin') {
+      execSync(
+        `docker run --rm --interactive --tty --volume $PWD:/app --entrypoint="" airlocal-run:phplatest-node10 npm ${command}`,
+        { stdio: 'inherit' }
+      )
+    } else {
+      execSync(
+        `docker run --rm --interactive --tty --volume $PWD:/app --entrypoint="" --user=${userInfo.uid}:${userInfo.gid} airlocal-run:phplatest-node10 npm ${command}`,
+        { stdio: 'inherit' }
+      )
+    }
   } catch (err) {
     logger.log('error', err)
   }
@@ -61,12 +77,20 @@ const gulp = async function (command) {
   await buildRunImg()
 
   const userInfo = os.userInfo()
+  const osType = os.type()
 
   try {
-    execSync(
-      `docker run --rm --interactive --tty --volume $PWD:/app --entrypoint="" --user=${userInfo.uid}:${userInfo.gid} airlocal-run:phplatest-node10 npm run gulp`,
-      { stdio: 'inherit' }
-    )
+    if (osType === 'Darwin') {
+      execSync(
+        'docker run --rm --interactive --tty --volume $PWD:/app --entrypoint="" airlocal-run:phplatest-node10 npm run gulp',
+        { stdio: 'inherit' }
+      )
+    } else {
+      execSync(
+        `docker run --rm --interactive --tty --volume $PWD:/app --entrypoint="" --user=${userInfo.uid}:${userInfo.gid} airlocal-run:phplatest-node10 npm run gulp`,
+        { stdio: 'inherit' }
+      )
+    }
   } catch (err) {
     logger.log('error', err)
   }
