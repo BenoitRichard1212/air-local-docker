@@ -1,3 +1,3 @@
-FROM quay.io/45air/wordpress
+FROM node:10
 
 WORKDIR /app
