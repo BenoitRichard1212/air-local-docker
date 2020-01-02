@@ -34,7 +34,9 @@ const composer = async function (command) {
 
   try {
     execSync(
-      `docker run --rm --interactive --tty --volume $PWD:/app --volume ${composerCache}:/home/docker/.composer/cache --entrypoint="" --user=${userInfo.uid}:${userInfo.gid} airlocal-run:phplatest-node10 composer ${command}`,
+      `docker run --rm --interactive --tty --volume $PWD:/app --volume ${composerCache}:/home/docker/.composer/cache --entrypoint="" --user=${
+        userInfo.uid
+      }:${userInfo.gid} airlocal-run:phplatest-node10 composer ${command}`,
       { stdio: 'inherit' }
     )
   } catch (err) {
@@ -49,7 +51,9 @@ const npm = async function (command) {
 
   try {
     execSync(
-      `docker run --rm --interactive --tty --volume $PWD:/app --entrypoint="" --user=${userInfo.uid}:${userInfo.gid} airlocal-run:phplatest-node10 npm ${command}`,
+      `docker run --rm --interactive --tty --volume $PWD:/app --entrypoint="" --user=${
+        userInfo.uid
+      }:${userInfo.gid} airlocal-run:phplatest-node10 npm ${command}`,
       { stdio: 'inherit' }
     )
   } catch (err) {
@@ -64,7 +68,9 @@ const gulp = async function (command) {
 
   try {
     execSync(
-      `docker run --rm --interactive --tty --volume $PWD:/app --entrypoint="" --user=${userInfo.uid}:${userInfo.gid} airlocal-run:phplatest-node10 npm run gulp`,
+      `docker run --rm --interactive --tty --volume $PWD:/app --entrypoint="" --user=${
+        userInfo.uid
+      }:${userInfo.gid} airlocal-run:phplatest-node10 npm run gulp`,
       { stdio: 'inherit' }
     )
   } catch (err) {
@@ -84,12 +90,17 @@ const composerCacheDir = async function () {
 
 const buildRunImg = async function () {
   const buildDir = path.join(rootPath, 'build', 'run')
+  const userInfo = os.userInfo()
 
   try {
     execSync(
       'cd ' +
         buildDir +
-        ' && docker build --build-arg NODE_VERSION="10" -t airlocal-run:phplatest-node10 .',
+        ` && docker build --build-arg NODE_VERSION="10" --build-arg USER_ID=${
+          userInfo.uid
+        } --build-arg GROUP_ID=${
+          userInfo.gid
+        } -t airlocal-run:phplatest-node10 .`,
       { stdio: 'inherit' }
     )
     log(success('Built airlocal-run:phplatest-node10'))
