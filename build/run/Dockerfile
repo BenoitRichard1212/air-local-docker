@@ -8,7 +8,6 @@ USER root
 
 RUN if [ "$OS_TYPE" != "Darwin" ];\
 	then userdel -f docker &&\
-	groupdel docker &&\
 	groupadd -g ${GROUP_ID} docker &&\
 	useradd -l -u ${USER_ID} -g docker docker &&\
 	usermod -a -G sudo docker &&\
