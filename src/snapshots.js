@@ -168,7 +168,7 @@ async function pull () {
     response = await axios.post(
       'https://devops.45air.co/api/v4/projects/899/trigger/pipeline',
       {
-        token: '88033918d058794c3ced01033802a6',
+        token: 'a2a4b3548e384d016faa1eb2dd41a3',
         ref: 'master',
         variables
       }
