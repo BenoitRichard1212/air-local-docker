@@ -12,5 +12,8 @@
   "prettier.disableLanguages": ["javascript", "json", "yml", "yaml"],
   "cloudcode.yaml.format.enable": false,
   "yaml.format.enable": true,
-  "yaml.validate": true
+  "yaml.validate": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  }
 }
