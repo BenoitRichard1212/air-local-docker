@@ -306,7 +306,7 @@ const removeHosts = function (cmd, hosts, options) {
     ) {
       if (error) {
         //logger.log('error', error)
-        log(error('Error failed to write to hosts file'))
+        console.log(chalk.bold.red('Error failed to write to hosts file'))
         log(
           warning(
             'Remove "127.0.0.1 ' + hosts + '" to your hosts file manually'
@@ -316,7 +316,7 @@ const removeHosts = function (cmd, hosts, options) {
       }
       if (stderr) {
         //logger.log('error', stderr)
-        log(error('Error failed to write to hosts file'))
+        console.log(chalk.bold.red('Error failed to write to hosts file'))
         log(
           warning(
             'Remove "127.0.0.1 ' + hosts + '" to your hosts file manually'
