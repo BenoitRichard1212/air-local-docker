@@ -277,7 +277,7 @@ const writeHosts = function (cmd, hosts, options) {
     sudo.exec(cmd + ' add ' + hosts, options, function (error, stdout, stderr) {
       if (error) {
         //logger.log('error', error)
-        log(error('Error failed to write to hosts file'))
+        console.log(chalk.bold.red('Error failed to write to hosts file'))
         log(
           warning('Add "127.0.0.1 ' + hosts + '" to your hosts file manually')
         )
