@@ -276,7 +276,7 @@ const writeHosts = function (cmd, hosts, options) {
   return new Promise(resolve => {
     sudo.exec(cmd + ' add ' + hosts, options, function (error, stdout, stderr) {
       if (error) {
-        logger.log('error', error)
+        //logger.log('error', error)
         log(error('Error failed to write to hosts file'))
         log(
           warning('Add "127.0.0.1 ' + hosts + '" to your hosts file manually')
@@ -284,7 +284,7 @@ const writeHosts = function (cmd, hosts, options) {
         resolve()
       }
       if (stderr) {
-        logger.log('error', stderr)
+        //logger.log('error', stderr)
         log(error('Error failed to write to hosts file'))
         log(
           warning('Add "127.0.0.1 ' + hosts + '" to your hosts file manually')
@@ -305,7 +305,7 @@ const removeHosts = function (cmd, hosts, options) {
       stderr
     ) {
       if (error) {
-        logger.log('error', error)
+        //logger.log('error', error)
         log(error('Error failed to write to hosts file'))
         log(
           warning(
@@ -315,7 +315,7 @@ const removeHosts = function (cmd, hosts, options) {
         resolve()
       }
       if (stderr) {
-        logger.log('error', stderr)
+        //logger.log('error', stderr)
         log(error('Error failed to write to hosts file'))
         log(
           warning(
