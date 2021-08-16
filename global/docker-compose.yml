@@ -25,6 +25,7 @@ services:
 
   mysql:
     image: mysql:5.7
+    command: --max_allowed_packet=1073741824
     volumes:
       - "mysqlData:/var/lib/mysql"
     ports:
